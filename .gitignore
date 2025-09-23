@@ -1,0 +1,33 @@
+#Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+#Environment Variables
+.env
+client/.env
+server/.env
+
+#Build outputs
+client/build/
+server/dist/
+
+#Logs
+*.log
+npm-debug.log*
+
+#Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+#OS
+.DS_Store
+Thumbs.db

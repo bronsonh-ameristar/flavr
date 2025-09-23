@@ -1,0 +1,19 @@
+{
+  "name": "flavor",
+  "version": "1.0.0",
+  "description": "A meal planning and grocery list application",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "install-deps": "npm install && cd client && npm install && cd ../server && npm install",
+    "db:start": "docker-compose up -d postgres",
+    "db:stop": "docker-compose down",
+    "db:reset": "docker-compose down -v && docker-compose up -d postgres",
+    "db:logs": "docker logs -f meal-tracker-db"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

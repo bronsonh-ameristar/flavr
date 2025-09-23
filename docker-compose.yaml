@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: meal-tracker-db
+    restart: always
+    environment:
+      POSTGRES_DB: meal_tracker_dev
+      POSTGRES_USER: bronson-test
+      POSTGRES_PASSWORD: bronson123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meal_user -d meal_tracker_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
