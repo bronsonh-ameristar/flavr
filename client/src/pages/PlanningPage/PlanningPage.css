@@ -1,0 +1,584 @@
+/* client/src/pages/PlanningPage/PlanningPage.css */
+.planning-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.planning-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.planning-header h1 {
+  font-size: 2.5rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.week-navigation {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-btn {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+  background: #f8fafc;
+  border-color: #4f46e5;
+}
+
+.week-display {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 250px;
+  text-align: center;
+}
+
+.planning-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.weekly-calendar {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: 120px repeat(7, 1fr);
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.time-column-header {
+  padding: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #e2e8f0;
+}
+
+.day-header {
+  padding: 1rem;
+  text-align: center;
+  border-right: 1px solid #e2e8f0;
+}
+
+.day-header.today {
+  background: rgba(79, 70, 229, 0.1);
+}
+
+.day-name {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.day-number {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.day-header.today .day-number {
+  color: var(--primary-color);
+}
+
+.calendar-body {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.meal-row {
+  display: grid;
+  grid-template-columns: 120px repeat(7, 1fr);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.meal-row:last-child {
+  border-bottom: none;
+}
+
+.meal-type-header {
+  padding: 1.5rem 1rem;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+}
+
+.meal-type-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.meal-slot {
+  padding: 1rem;
+  border-right: 1px solid #e2e8f0;
+  min-height: 80px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.meal-slot:hover {
+  background: #f8fafc;
+}
+
+.meal-slot.today {
+  background: rgba(79, 70, 229, 0.05);
+}
+
+.planned-meal {
+  background: var(--primary-color);
+  color: white;
+  padding: 0.75rem;
+  border-radius: 6px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.meal-name {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.meal-time {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.empty-slot {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  gap: 0.5rem;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.empty-slot:hover {
+  opacity: 1;
+}
+
+.add-icon {
+  color: var(--primary-color);
+}
+
+.planning-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.summary-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card h3 {
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+}
+
+.summary-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat {
+  text-align: center;
+  flex: 1;
+}
+
+.stat-number {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.shopping-preview {
+  text-align: center;
+}
+
+.shopping-preview p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+/* client/src/pages/GroceryPage/GroceryPage.css */
+.grocery-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.grocery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 2rem;
+}
+
+.header-content h1 {
+  font-size: 2.5rem;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+}
+
+.progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.progress-info span {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.progress-bar {
+  width: 200px;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #10b981;
+  transition: width 0.3s ease;
+}
+
+.grocery-actions {
+  display: flex;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.store-filter {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.store-select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+}
+
+.grocery-lists {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.store-section {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.store-header {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.store-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.store-info h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0;
+}
+
+.store-progress {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.store-progress-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.store-progress-fill {
+  height: 100%;
+  background: #10b981;
+  transition: width 0.3s ease;
+}
+
+.items-list {
+  padding: 1rem;
+}
+
+.grocery-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  transition: background-color 0.2s ease;
+}
+
+.grocery-item:hover {
+  background: #f8fafc;
+}
+
+.grocery-item.completed {
+  opacity: 0.6;
+}
+
+.grocery-item.completed .item-name {
+  text-decoration: line-through;
+}
+
+.complete-btn {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.complete-btn:hover {
+  border-color: #10b981;
+}
+
+.grocery-item.completed .complete-btn {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.empty-check {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.item-content {
+  flex: 1;
+}
+
+.item-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.item-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.item-category {
+  background: #f1f5f9;
+  padding: 0.1rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.remove-btn:hover {
+  background: #fef2f2;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+}
+
+.empty-state svg {
+  color: #ddd;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  margin-bottom: 2rem;
+}
+
+/* Shared button styles */
+.btn-primary, .btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #4338ca;
+}
+
+.btn-secondary {
+  background: white;
+  color: #4f46e5;
+  border: 1px solid #4f46e5;
+}
+
+.btn-secondary:hover {
+  background: #4f46e5;
+  color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .calendar-header,
+  .meal-row {
+    grid-template-columns: 100px repeat(7, 1fr);
+  }
+  
+  .time-column-header,
+  .meal-type-header {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .planning-page,
+  .grocery-page {
+    padding: 1rem;
+  }
+  
+  .planning-header,
+  .grocery-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .week-navigation {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .grocery-actions,
+  .planning-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .grocery-actions button,
+  .planning-actions button {
+    flex: 1;
+  }
+  
+  .calendar-header,
+  .meal-row {
+    grid-template-columns: 80px repeat(7, 1fr);
+  }
+  
+  .day-header,
+  .meal-slot {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .store-filter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .summary-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}

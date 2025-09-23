@@ -1,0 +1,78 @@
+/* client/src/components/common/ThemeToggle/ThemeToggle.css */
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-slider {
+  width: 50px;
+  height: 26px;
+  background: var(--toggle-bg);
+  border-radius: 13px;
+  position: relative;
+  transition: all 0.3s ease;
+  border: 2px solid var(--toggle-border);
+  display: flex;
+  align-items: center;
+}
+
+.toggle-slider.light {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.toggle-slider.dark {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.toggle-icon {
+  width: 18px;
+  height: 18px;
+  background: var(--toggle-icon-bg);
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: var(--toggle-icon-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-slider.light .toggle-icon {
+  left: 2px;
+  background: #fbbf24;
+  color: #ffffff;
+}
+
+.toggle-slider.dark .toggle-icon {
+  left: 26px;
+  background: #6366f1;
+  color: #ffffff;
+}
+
+.theme-toggle:hover .toggle-slider {
+  transform: scale(1.05);
+}
+
+.theme-toggle:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 15px;
+}
+
+/* Add a subtle glow effect */
+.toggle-slider.dark {
+  box-shadow: inset 0 0 10px rgba(99, 102, 241, 0.3);
+}
+
+.toggle-slider.light {
+  box-shadow: inset 0 0 10px rgba(251, 191, 36, 0.2);
+}
