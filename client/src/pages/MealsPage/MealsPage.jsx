@@ -1,4 +1,4 @@
-// Replace the existing MealsPage component with this updated version
+// client/src/pages/MealsPage/MealsPage.jsx - REPLACE ENTIRE FILE
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Clock, Users, AlertCircle } from 'lucide-react';
 import { useMeals } from '../../hooks/useMeals';
@@ -12,25 +12,29 @@ const MealsPage = () => {
     loading, 
     error, 
     totalCount, 
+    fetchMeals,
     searchMeals, 
     deleteMeal 
   } = useMeals();
 
   const categories = ['all', 'breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
 
-  // Handle search and filter changes with proper debouncing
+  // Handle search and filter changes
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (searchTerm || selectedCategory !== 'all') {
-        searchMeals(searchTerm, selectedCategory);
-      } else {
-        // If no search term and category is 'all', fetch all meals
-        searchMeals('', 'all');
-      }
-    }, 300);
-
-    return () => clearTimeout(debounceTimer);
-  }, [searchTerm, selectedCategory]); // Remove searchMeals from dependencies
+    // Only search if there's actually a search term or non-default category
+    if (searchTerm.trim() || selectedCategory !== 'all') {
+      const debounceTimer = setTimeout(() => {
+        searchMeals(searchTerm.trim(), selectedCategory);
+      }, 300);
+      return () => clearTimeout(debounceTimer);
+    } else {
+      // If no search/filter, just fetch all meals
+      const debounceTimer = setTimeout(() => {
+        fetchMeals();
+      }, 300);
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [searchTerm, selectedCategory]);
 
   const handleDeleteMeal = async (mealId, mealName) => {
     if (window.confirm(`Are you sure you want to delete "${mealName}"?`)) {
@@ -39,6 +43,14 @@ const MealsPage = () => {
       } catch (error) {
         alert('Failed to delete meal: ' + error.message);
       }
+    }
+  };
+
+  const handleRetry = () => {
+    if (searchTerm.trim() || selectedCategory !== 'all') {
+      searchMeals(searchTerm.trim(), selectedCategory);
+    } else {
+      fetchMeals();
     }
   };
 
@@ -67,6 +79,9 @@ const MealsPage = () => {
         <div className="error-banner">
           <AlertCircle size={16} />
           <span>Error: {error}</span>
+          <button onClick={handleRetry} className="retry-btn">
+            Retry
+          </button>
         </div>
       )}
 
@@ -100,15 +115,19 @@ const MealsPage = () => {
         {meals.map(meal => (
           <div key={meal.id} className="meal-card">
             <div className="meal-image">
-              <img 
-                src={meal.imageUrl || '/api/placeholder/300/200'} 
-                alt={meal.name}
-                onError={(e) => {
-                  e.target.src = '/api/placeholder/300/200';
-                }}
-              />
-              <div className="meal-category">{meal.category}</div>
-            </div>
+            <img 
+              src={meal.imageUrl || `https://via.placeholder.com/300x200/e2e8f0/64748b?text=${encodeURIComponent(meal.name)}`} 
+              alt={meal.name}
+              onError={(e) => {
+                // Prevent infinite loop by only setting fallback once
+                if (!e.target.dataset.fallback) {
+                  e.target.dataset.fallback = 'true';
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjFmNWY5Ii8+CjxwYXRoIGQ9Ik0xMzAgMTAwTDE3MCA2MEwyMTAgMTAwTDE3MCAxNDBMMTMwIDEwMFoiIGZpbGw9IiM5NGEzYjgiLz4KPHN2ZyB4PSI1MCIgeT0iODAiIHdpZHRoPSIyMDAiIGhlaWdodD0iNDAiPgo8dGV4dCB4PSIxMDAiIHk9IjI1IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NDc0OGIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4KPC9zdmc+';
+                }
+              }}
+            />
+            <div className="meal-category">{meal.category}</div>
+          </div>
             
             <div className="meal-content">
               <h3>{meal.name}</h3>
@@ -147,7 +166,7 @@ const MealsPage = () => {
         ))}
       </div>
 
-      {meals.length === 0 && !loading && (
+      {meals.length === 0 && !loading && !error && (
         <div className="empty-state">
           <h3>No recipes found</h3>
           <p>

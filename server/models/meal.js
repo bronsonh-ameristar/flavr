@@ -5,6 +5,19 @@ module.exports = (sequelize, DataTypes) => {
   class Meal extends Model {
     static associate(models) {
       // We'll add associations later for ingredients, meal plans, etc.
+      // Meal has many ingredients
+      Meal.hasMany(models.Ingredient, {
+        foreignKey: 'mealId',
+        as: 'ingredients',
+        onDelete: 'CASCADE'
+      });
+
+      // Meal has many meal plans
+      Meal.hasMany(models.MealPlan, {
+        foreignKey: 'mealId',
+        as: 'mealPlans',
+        onDelete: 'CASCADE'
+      });
     }
 
     // Instance method to get total time
