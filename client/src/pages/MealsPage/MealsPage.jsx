@@ -1,12 +1,21 @@
-// client/src/pages/MealsPage/MealsPage.jsx - REPLACE ENTIRE FILE
+// client/src/pages/MealsPage/MealsPage.jsx - COMPLETE REPLACEMENT
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Clock, Users, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Filter, Clock, Users, AlertCircle, Eye, Edit, Trash2 } from 'lucide-react';
 import { useMeals } from '../../hooks/useMeals';
+import MealForm from '../../components/meals/MealForm/MealForm';
+import MealDetailModal from '../../components/meals/MealDetailModal/MealDetailModal';
 import './MealsPage.css';
 
 const MealsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showMealForm, setShowMealForm] = useState(false);
+  const [showMealDetail, setShowMealDetail] = useState(false);
+  const [editingMeal, setEditingMeal] = useState(null);
+  const [viewingMeal, setViewingMeal] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const { 
     meals, 
     loading, 
@@ -14,6 +23,8 @@ const MealsPage = () => {
     totalCount, 
     fetchMeals,
     searchMeals, 
+    createMeal,
+    updateMeal,
     deleteMeal 
   } = useMeals();
 
@@ -21,19 +32,15 @@ const MealsPage = () => {
 
   // Handle search and filter changes
   useEffect(() => {
-    // Only search if there's actually a search term or non-default category
-    if (searchTerm.trim() || selectedCategory !== 'all') {
-      const debounceTimer = setTimeout(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchTerm.trim() || selectedCategory !== 'all') {
         searchMeals(searchTerm.trim(), selectedCategory);
-      }, 300);
-      return () => clearTimeout(debounceTimer);
-    } else {
-      // If no search/filter, just fetch all meals
-      const debounceTimer = setTimeout(() => {
+      } else {
         fetchMeals();
-      }, 300);
-      return () => clearTimeout(debounceTimer);
-    }
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
   }, [searchTerm, selectedCategory]);
 
   const handleDeleteMeal = async (mealId, mealName) => {
@@ -44,6 +51,43 @@ const MealsPage = () => {
         alert('Failed to delete meal: ' + error.message);
       }
     }
+  };
+
+  const handleAddMeal = () => {
+    setEditingMeal(null);
+    setShowMealForm(true);
+  };
+
+  const handleEditMeal = (meal) => {
+    setEditingMeal(meal);
+    setShowMealForm(true);
+  };
+
+  const handleViewMeal = (meal) => {
+    setViewingMeal(meal);
+    setShowMealDetail(true);
+  };
+
+  const handleSaveMeal = async (mealData) => {
+    setIsSubmitting(true);
+    try {
+      if (editingMeal) {
+        await updateMeal(editingMeal.id, mealData);
+      } else {
+        await createMeal(mealData);
+      }
+      setShowMealForm(false);
+      setEditingMeal(null);
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelForm = () => {
+    setShowMealForm(false);
+    setEditingMeal(null);
   };
 
   const handleRetry = () => {
@@ -69,7 +113,7 @@ const MealsPage = () => {
     <div className="meals-page">
       <div className="meals-header">
         <h1>Your Recipes ({totalCount})</h1>
-        <button className="add-meal-btn">
+        <button className="add-meal-btn" onClick={handleAddMeal}>
           <Plus size={20} />
           Add New Recipe
         </button>
@@ -115,19 +159,18 @@ const MealsPage = () => {
         {meals.map(meal => (
           <div key={meal.id} className="meal-card">
             <div className="meal-image">
-            <img 
-              src={meal.imageUrl || `https://via.placeholder.com/300x200/e2e8f0/64748b?text=${encodeURIComponent(meal.name)}`} 
-              alt={meal.name}
-              onError={(e) => {
-                // Prevent infinite loop by only setting fallback once
-                if (!e.target.dataset.fallback) {
-                  e.target.dataset.fallback = 'true';
-                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjFmNWY5Ii8+CjxwYXRoIGQ9Ik0xMzAgMTAwTDE3MCA2MEwyMTAgMTAwTDE3MCAxNDBMMTMwIDEwMFoiIGZpbGw9IiM5NGEzYjgiLz4KPHN2ZyB4PSI1MCIgeT0iODAiIHdpZHRoPSIyMDAiIGhlaWdodD0iNDAiPgo8dGV4dCB4PSIxMDAiIHk9IjI1IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2NDc0OGIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4KPC9zdmc+';
-                }
-              }}
-            />
-            <div className="meal-category">{meal.category}</div>
-          </div>
+              <img 
+                src={meal.imageUrl || `https://via.placeholder.com/300x200/e2e8f0/64748b?text=${encodeURIComponent(meal.name)}`} 
+                alt={meal.name}
+                onError={(e) => {
+                  if (!e.target.dataset.fallback) {
+                    e.target.dataset.fallback = 'true';
+                    e.target.src = `https://via.placeholder.com/300x200/e2e8f0/64748b?text=${encodeURIComponent(meal.name)}`;
+                  }
+                }}
+              />
+              <div className="meal-category">{meal.category}</div>
+            </div>
             
             <div className="meal-content">
               <h3>{meal.name}</h3>
@@ -152,13 +195,26 @@ const MealsPage = () => {
               </div>
               
               <div className="meal-actions">
-                <button className="btn-secondary">Edit</button>
-                <button className="btn-primary">View Recipe</button>
                 <button 
-                  className="btn-danger"
-                  onClick={() => handleDeleteMeal(meal.id, meal.name)}
+                  className="btn-icon btn-view"
+                  onClick={() => handleViewMeal(meal)}
+                  title="View Recipe"
                 >
-                  Delete
+                  <Eye size={18} />
+                </button>
+                <button 
+                  className="btn-icon btn-edit"
+                  onClick={() => handleEditMeal(meal)}
+                  title="Edit Recipe"
+                >
+                  <Edit size={18} />
+                </button>
+                <button 
+                  className="btn-icon btn-delete"
+                  onClick={() => handleDeleteMeal(meal.id, meal.name)}
+                  title="Delete Recipe"
+                >
+                  <Trash2 size={18} />
                 </button>
               </div>
             </div>
@@ -175,7 +231,7 @@ const MealsPage = () => {
               : 'Add your first recipe to get started!'
             }
           </p>
-          <button className="add-meal-btn">
+          <button className="add-meal-btn" onClick={handleAddMeal}>
             <Plus size={20} />
             Add Your First Recipe
           </button>
@@ -186,6 +242,30 @@ const MealsPage = () => {
         <div className="loading-overlay">
           <div className="loading-spinner"></div>
         </div>
+      )}
+
+      {showMealForm && (
+        <MealForm
+          meal={editingMeal}
+          onSave={handleSaveMeal}
+          onCancel={handleCancelForm}
+          isLoading={isSubmitting}
+        />
+      )}
+
+      {showMealDetail && viewingMeal && (
+        <MealDetailModal
+          meal={viewingMeal}
+          onClose={() => {
+            setShowMealDetail(false);
+            setViewingMeal(null);
+          }}
+          onEdit={(meal) => {
+            setShowMealDetail(false);
+            setViewingMeal(null);
+            handleEditMeal(meal);
+          }}
+        />
       )}
     </div>
   );

@@ -1,5 +1,6 @@
+// client/src/pages/PlanningPage/EnhancedPlanningPage.jsx - COMPLETE REPLACEMENT
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Calendar, ShoppingCart, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, ShoppingCart } from 'lucide-react';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { useMealPlanning } from '../../hooks/useMealPlanning';
 import { useMeals } from '../../hooks/useMeals';
@@ -14,7 +15,6 @@ const EnhancedPlanningPage = () => {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [draggedMeal, setDraggedMeal] = useState(null);
 
-  // Get the start of the current week (Sunday)
   const getWeekStart = (date) => {
     const d = new Date(date);
     const day = d.getDay();
@@ -29,7 +29,6 @@ const EnhancedPlanningPage = () => {
   const startDateStr = weekStart.toISOString().split('T')[0];
   const endDateStr = weekEnd.toISOString().split('T')[0];
 
-  // Hooks
   const { meals } = useMeals();
   const {
     mealPlans,
@@ -41,7 +40,6 @@ const EnhancedPlanningPage = () => {
     generateGroceryList
   } = useMealPlanning(startDateStr, endDateStr);
 
-  // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -65,20 +63,18 @@ const EnhancedPlanningPage = () => {
   };
 
   const handleSlotClick = (date, mealType) => {
-  const dateStr = date.toISOString().split('T')[0];
-  const key = `${dateStr}_${mealType}`; // Change to underscore
-  
-  if (mealPlans[key]) {
-    // Remove meal if slot is occupied
-    if (window.confirm('Remove this meal from your plan?')) {
-      removeMealFromPlan(dateStr, mealType);
+    const dateStr = date.toISOString().split('T')[0];
+    const key = `${dateStr}-${mealType}`;
+    
+    if (mealPlans[key]) {
+      if (window.confirm('Remove this meal from your plan?')) {
+        removeMealFromPlan(dateStr, mealType);
+      }
+    } else {
+      setSelectedSlot({ date: dateStr, mealType });
+      setShowMealSelector(true);
     }
-  } else {
-    // Open meal selector for empty slot
-    setSelectedSlot({ date: dateStr, mealType });
-    setShowMealSelector(true);
-  }
-};
+  };
 
   const handleMealSelect = async (mealId) => {
     if (selectedSlot) {
@@ -98,29 +94,68 @@ const EnhancedPlanningPage = () => {
   };
 
   const handleDragEnd = async (event) => {
-  const { active, over } = event;
-  setDraggedMeal(null);
+    const { active, over } = event;
+    setDraggedMeal(null);
 
-  if (!over) return;
+    if (!over) return;
 
-  const mealId = parseInt(active.id);
-  const [date, mealType] = over.id.split('_'); // Now it works correctly
+    const mealId = parseInt(active.id);
+    
+    // Parse the droppable ID: format is "slot-YYYY-MM-DD-mealType"
+    const dropId = over.id;
+    if (!dropId.startsWith('slot-')) {
+      console.error('Invalid drop target:', dropId);
+      return;
+    }
+    
+    // Remove "slot-" prefix and split
+    const withoutPrefix = dropId.substring(5); // Remove "slot-"
+    const lastDashIndex = withoutPrefix.lastIndexOf('-');
+    
+    if (lastDashIndex === -1) {
+      console.error('Invalid drop ID format:', dropId);
+      return;
+    }
+    
+    const date = withoutPrefix.substring(0, lastDashIndex);
+    const mealType = withoutPrefix.substring(lastDashIndex + 1);
 
-  console.log('Dropping meal:', { mealId, date, mealType }); // Debug log
+    console.log('Drop details:', { dropId, date, mealType, mealId });
 
-  try {
-    await addMealToPlan(date, mealType, mealId);
-  } catch (error) {
-    alert('Failed to add meal: ' + error.message);
-  }
-};
+    // Validation
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      alert('Invalid date format');
+      return;
+    }
+
+    const validMealTypes = ['breakfast', 'lunch', 'dinner'];
+    if (!validMealTypes.includes(mealType)) {
+      alert('Invalid meal type: ' + mealType);
+      return;
+    }
+
+    if (isNaN(mealId) || mealId <= 0) {
+      alert('Invalid meal ID');
+      return;
+    }
+
+    try {
+      await addMealToPlan(date, mealType, mealId);
+    } catch (error) {
+      console.error('Failed to add meal:', error);
+      alert('Failed to add meal: ' + error.message);
+    }
+  };
 
   const handleGenerateGroceryList = async () => {
     try {
       const groceryData = await generateGroceryList();
-      // Navigate to grocery page with the generated list
-      // For now, we'll show an alert with the count
-      alert(`Generated grocery list with ${groceryData.totalItems} items!`);
+      if (groceryData && groceryData.totalItems > 0) {
+        alert(`Generated grocery list with ${groceryData.totalItems} items! (Navigate to Grocery page to view)`);
+        // TODO: Store in state or navigate to grocery page
+      } else {
+        alert('No items to add to grocery list. Plan some meals first!');
+      }
     } catch (error) {
       alert('Failed to generate grocery list: ' + error.message);
     }
@@ -152,7 +187,10 @@ const EnhancedPlanningPage = () => {
           <div className="planning-actions">
             <button 
               className="btn-secondary"
-              onClick={() => setShowMealSelector(true)}
+              onClick={() => {
+                setSelectedSlot(null);
+                setShowMealSelector(true);
+              }}
             >
               <Plus size={16} />
               Quick Add Meal
@@ -189,15 +227,15 @@ const EnhancedPlanningPage = () => {
           <div className="planning-sidebar">
             <MealSelector
               meals={meals}
-              onMealSelect={draggedMeal ? null : handleMealSelect}
+              onMealSelect={null}
               isDragMode={true}
             />
           </div>
         </div>
 
         {showMealSelector && (
-          <div className="meal-selector-modal">
-            <div className="modal-content">
+          <div className="meal-selector-modal" onClick={() => setShowMealSelector(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h3>Select a Meal</h3>
                 <button 
@@ -207,11 +245,13 @@ const EnhancedPlanningPage = () => {
                   ×
                 </button>
               </div>
-              <MealSelector
-                meals={meals}
-                onMealSelect={handleMealSelect}
-                isDragMode={false}
-              />
+              <div className="modal-body">
+                <MealSelector
+                  meals={meals}
+                  onMealSelect={handleMealSelect}
+                  isDragMode={false}
+                />
+              </div>
             </div>
           </div>
         )}

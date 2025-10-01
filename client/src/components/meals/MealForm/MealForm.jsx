@@ -23,6 +23,7 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
   const difficulties = ['easy', 'medium', 'hard'];
   const ingredientCategories = ['produce', 'meat', 'dairy', 'pantry', 'spices', 'frozen', 'other'];
   const commonUnits = ['cup', 'cups', 'tbsp', 'tsp', 'lb', 'lbs', 'oz', 'g', 'kg', 'ml', 'l', 'piece', 'pieces', 'clove', 'cloves'];
+  const commonStores = ['Whole Foods', 'Costco', 'Target', 'Walmart', 'Trader Joe\'s', 'Local Market', 'Other'];
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -295,6 +296,17 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
                       <option key={cat} value={cat}>
                         {cat.charAt(0).toUpperCase() + cat.slice(1)}
                       </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={ingredient.store || ''}
+                    onChange={(e) => handleIngredientChange(index, 'store', e.target.value)}
+                    className="ingredient-store"
+                  >
+                    <option value="">Store (optional)</option>
+                    {commonStores.map(store => (
+                      <option key={store} value={store}>{store}</option>
                     ))}
                   </select>
                   

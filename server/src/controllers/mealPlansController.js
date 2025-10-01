@@ -122,7 +122,7 @@ class MealPlansController {
     }
   }
 
-  // Generate grocery list from meal plans
+  // Generate grocery list
   static async generateGroceryList(req, res) {
     try {
       const { startDate, endDate } = req.query;
@@ -158,14 +158,17 @@ class MealPlansController {
             const key = `${ingredient.name}-${ingredient.unit || 'unit'}`;
             
             if (consolidatedIngredients[key]) {
-              // Try to add quantities (basic implementation)
               const existingQty = parseFloat(consolidatedIngredients[key].quantity) || 0;
               const newQty = parseFloat(ingredient.quantity) || 0;
               consolidatedIngredients[key].quantity = (existingQty + newQty).toString();
               
-              // Add meal names for reference
               if (!consolidatedIngredients[key].usedInMeals.includes(plan.meal.name)) {
                 consolidatedIngredients[key].usedInMeals.push(plan.meal.name);
+              }
+              
+              // Keep the first non-null store
+              if (!consolidatedIngredients[key].store && ingredient.store) {
+                consolidatedIngredients[key].store = ingredient.store;
               }
             } else {
               consolidatedIngredients[key] = {
@@ -173,6 +176,7 @@ class MealPlansController {
                 quantity: ingredient.quantity,
                 unit: ingredient.unit,
                 category: ingredient.category,
+                store: ingredient.store || 'Unassigned',
                 usedInMeals: [plan.meal.name]
               };
             }
@@ -180,14 +184,20 @@ class MealPlansController {
         }
       });
 
-      // Group by category for easier shopping
+      // Group by store first, then by category within each store
       const groceryList = {};
       Object.values(consolidatedIngredients).forEach(ingredient => {
-        const category = ingredient.category || 'other';
-        if (!groceryList[category]) {
-          groceryList[category] = [];
+        const store = ingredient.store || 'Unassigned';
+        if (!groceryList[store]) {
+          groceryList[store] = {};
         }
-        groceryList[category].push(ingredient);
+        
+        const category = ingredient.category || 'other';
+        if (!groceryList[store][category]) {
+          groceryList[store][category] = [];
+        }
+        
+        groceryList[store][category].push(ingredient);
       });
 
       res.json({

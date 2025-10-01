@@ -4,14 +4,12 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Ingredient extends Model {
     static associate(models) {
-      // Ingredient belongs to Meal
       Ingredient.belongsTo(models.Meal, {
         foreignKey: 'mealId',
         as: 'meal'
       });
     }
 
-    // Method to format for display
     getDisplayText() {
       return `${this.quantity}${this.unit ? ' ' + this.unit : ''} ${this.name}`;
     }
@@ -53,6 +51,10 @@ module.exports = (sequelize, DataTypes) => {
           msg: 'Category must be one of: produce, meat, dairy, pantry, spices, frozen, other'
         }
       }
+    },
+    store: {
+      type: DataTypes.STRING,
+      allowNull: true
     },
     mealId: {
       type: DataTypes.INTEGER,
