@@ -1,0 +1,88 @@
+.occupied-slot-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  overflow-y: auto; /* Add this to make overlay scrollable */
+}
+
+.occupied-slot-modal {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh; /* Add this to limit height */
+  display: flex; /* Add this */
+  flex-direction: column; /* Add this */
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-primary);
+  margin: auto; /* Add this for better centering when scrolling */
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0; /* Keep header fixed at top */
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.occupied-slot-options {
+  padding: 0.75rem;
+  display: flex;
+  gap: 0.5rem; /* Space between buttons */
+  align-items: center; /* Vertically align buttons */
+}
+
+/* Make buttons equal size */
+.occupied-slot-options button {
+  flex: 1; /* Each button takes equal width */
+  height: 40px;
+  white-space: nowrap;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .occupied-slot-overlay {
+    padding: 0;
+  }
+  
+  .occupied-slot-modal {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

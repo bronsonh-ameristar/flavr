@@ -1,6 +1,12 @@
 /* client/src/pages/PlanningPage/PlanningPage.css */
-.enhanced-planning-page {
-  padding: 2rem;
+body {
+  margin: 0;
+  padding: 2rem; /* applies padding around the whole page */
+}
+
+.planning-page {
+  padding: 2rem 3rem;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -102,28 +108,6 @@
 
 .day-header.today .day-number {
   color: #4f46e5;
-}
-
-.empty-slot-btn {
-  display: flex;                      /* centers content easily */
-  justify-content: center;            /* center horizontally */
-  align-items: center;                /* center vertically */
-  text-align: center;                 
-  color: var(--text-primary);         /* text color */
-  background-color: var(--bg-secondary); /* background color */
-  border: 1px dashed var(--bg-tertiary); /* optional subtle border */
-  border-radius: 8px;                 /* smooth corners */
-  padding: 1rem;                      /* comfortable click area */
-  cursor: pointer;                    /* indicates clickable */
-  transition: background-color 0.2s ease, transform 0.2s ease;
-  width: 100%;                        /* fills its grid cell */
-  height: 100%;                       /* ensures even sizing in grid */
-  box-sizing: border-box;
-}
-
-.empty-slot-btn:hover {
-  background-color: var(--primary-hover); /* fallback hover bg */
-  transform: translateY(-2px);                /* slight lift */
 }
 
 .calendar-body {
@@ -301,6 +285,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.progress-info span {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 
 .progress-bar {
@@ -536,128 +525,13 @@
   font-style: italic;
 }
 
-.item-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-}
-
-.change-store-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+.item-category {
   background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
   font-size: 0.75rem;
   color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.change-store-btn:hover {
-  background: var(--primary-light);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-.store-edit-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.store-edit-content {
-  background: var(--bg-primary);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 500px;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-primary);
-}
-
-.store-edit-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.store-edit-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 1.25rem;
-}
-
-.store-edit-body {
-  padding: 1.5rem;
-}
-
-.store-edit-body p {
-  margin: 0 0 1rem 0;
-  color: var(--text-secondary);
-}
-
-.store-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.store-option {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-primary);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-}
-
-.store-option:hover {
-  background: var(--primary-light);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-.store-option.current {
-  background: var(--primary-light);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  font-weight: 600;
-}
-
-.custom-store input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 1rem;
-}
-
-.custom-store input:focus {
-  outline: none;
-  border-color: var(--primary-color);
+  width: fit-content;
 }
 
 .remove-btn {
@@ -998,6 +872,27 @@
   background: #fef2f2;
 }
 
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #666;
+}
+
+.empty-state svg {
+  color: #ddd;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  margin-bottom: 2rem;
+}
+
 /* Shared button styles */
 .btn-primary, .btn-secondary {
   display: flex;
@@ -1031,10 +926,6 @@
   color: white;
 }
 
-.hero-content h1 {
-  color: var(--text-primary);
-}
-
 /* Responsive Design */
 @media (max-width: 1024px) {
   .calendar-header,
@@ -1046,6 +937,7 @@
   .meal-type-header {
     padding: 0.75rem 0.5rem;
     font-size: 0.9rem;
+    color: var(--text-secondary);
   }
 }
 

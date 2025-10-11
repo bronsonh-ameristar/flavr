@@ -1,7 +1,8 @@
 // client/src/pages/GroceryPage/GroceryPage.jsx - COMPLETE REPLACEMENT
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Check, Plus, Store, Trash2, Calendar, RefreshCw } from 'lucide-react';
+import { ShoppingCart, Check, Plus, Store, Trash2, Calendar, RefreshCw, Edit2, X } from 'lucide-react';
 import { useMealPlanning } from '../../hooks/useMealPlanning';
+import AddItemModal from '../../components/grocery/AddItemModal/AddItemModal';
 import './GroceryPage.css';
 
 const GroceryPage = () => {
@@ -9,6 +10,8 @@ const GroceryPage = () => {
   const [groceryList, setGroceryList] = useState({});
   const [loading, setLoading] = useState(false);
   const [lastGenerated, setLastGenerated] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
 
   // Get current week dates
   const getWeekDates = () => {
@@ -26,11 +29,11 @@ const GroceryPage = () => {
   const { startDate, endDate } = getWeekDates();
   const mealPlanning = useMealPlanning(startDate, endDate);
 
-  // Auto-generate grocery list on mount if there are meal plans
+  // Auto-generate grocery list on mount if there are meal plans (without alert)
   useEffect(() => {
     const autoGenerate = async () => {
       if (Object.keys(mealPlanning.mealPlans).length > 0 && !lastGenerated) {
-        await handleGenerateFromPlanning();
+        await handleGenerateFromPlanning(true); // true = silent mode
       }
     };
     
@@ -39,13 +42,15 @@ const GroceryPage = () => {
     }
   }, [mealPlanning.mealPlans, mealPlanning.loading]);
 
-  const handleGenerateFromPlanning = async () => {
+  const handleGenerateFromPlanning = async (silent = false) => {
     setLoading(true);
     try {
       const data = await mealPlanning.generateGroceryList();
       
       if (!data || !data.groceryList) {
-        alert('No meals planned for this week. Please add meals to your calendar first.');
+        if (!silent) {
+          alert('No meals planned for this week. Please add meals to your calendar first.');
+        }
         return;
       }
 
@@ -64,6 +69,7 @@ const GroceryPage = () => {
               quantity: item.quantity,
               unit: item.unit || '',
               category: item.category || 'other',
+              store: store,
               completed: false,
               usedInMeals: item.usedInMeals || []
             });
@@ -74,13 +80,17 @@ const GroceryPage = () => {
       setGroceryList(transformedList);
       setLastGenerated(new Date());
       
-      const totalItems = Object.values(transformedList).reduce((sum, items) => sum + items.length, 0);
-      if (totalItems > 0) {
-        alert(`Generated grocery list with ${totalItems} items from ${Object.keys(transformedList).length} stores!`);
+      if (!silent) {
+        const totalItems = Object.values(transformedList).reduce((sum, items) => sum + items.length, 0);
+        if (totalItems > 0) {
+          alert(`Generated grocery list with ${totalItems} items from ${Object.keys(transformedList).length} stores!`);
+        }
       }
     } catch (error) {
       console.error('Failed to generate grocery list:', error);
-      alert('Failed to generate grocery list: ' + error.message);
+      if (!silent) {
+        alert('Failed to generate grocery list: ' + error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -101,7 +111,6 @@ const GroceryPage = () => {
     setGroceryList(prev => {
       const newStoreItems = prev[storeKey].filter(item => item.id !== itemId);
       
-      // If store has no items left, remove the store
       if (newStoreItems.length === 0) {
         const { [storeKey]: removed, ...rest } = prev;
         return rest;
@@ -114,21 +123,12 @@ const GroceryPage = () => {
     });
   };
 
-  const addManualItem = () => {
-    const storeName = prompt('Enter store name:', 'Unassigned');
-    if (!storeName) return;
-    
-    const itemName = prompt('Enter item name:');
-    if (!itemName) return;
-    
-    const quantity = prompt('Enter quantity:', '1');
+  const handleAddItem = (itemData) => {
+    const storeName = itemData.store || 'Unassigned';
     
     const newItem = {
       id: `manual-${Date.now()}`,
-      name: itemName,
-      quantity: quantity || '1',
-      unit: '',
-      category: 'other',
+      ...itemData,
       completed: false,
       usedInMeals: []
     };
@@ -137,6 +137,49 @@ const GroceryPage = () => {
       ...prev,
       [storeName]: [...(prev[storeName] || []), newItem]
     }));
+    
+    setShowAddModal(false);
+  };
+
+  const handleEditStore = (storeKey, itemId, currentStore) => {
+    const item = groceryList[storeKey].find(i => i.id === itemId);
+    if (!item) return;
+    
+    setEditingItem({ ...item, oldStore: storeKey });
+  };
+
+  const handleUpdateStore = (newStore) => {
+    if (!editingItem || !newStore) {
+      setEditingItem(null);
+      return;
+    }
+
+    const oldStore = editingItem.oldStore;
+    
+    setGroceryList(prev => {
+      // Remove from old store
+      const updatedOldStore = prev[oldStore].filter(item => item.id !== editingItem.id);
+      
+      // Add to new store
+      const updatedItem = { ...editingItem, store: newStore };
+      const updatedNewStore = [...(prev[newStore] || []), updatedItem];
+      
+      const newList = { ...prev };
+      
+      // Update old store or remove if empty
+      if (updatedOldStore.length === 0) {
+        delete newList[oldStore];
+      } else {
+        newList[oldStore] = updatedOldStore;
+      }
+      
+      // Update new store
+      newList[newStore] = updatedNewStore;
+      
+      return newList;
+    });
+    
+    setEditingItem(null);
   };
 
   const clearCompleted = () => {
@@ -200,7 +243,7 @@ const GroceryPage = () => {
         <div className="grocery-actions">
           <button 
             className="btn-secondary"
-            onClick={addManualItem}
+            onClick={() => setShowAddModal(true)}
           >
             <Plus size={16} />
             Add Item
@@ -215,7 +258,7 @@ const GroceryPage = () => {
           </button>
           <button 
             className="btn-primary"
-            onClick={handleGenerateFromPlanning}
+            onClick={() => handleGenerateFromPlanning(false)}
             disabled={loading}
           >
             {loading ? <RefreshCw size={16} className="spinning" /> : <Calendar size={16} />}
@@ -232,13 +275,13 @@ const GroceryPage = () => {
           <div className="empty-actions">
             <button 
               className="btn-primary"
-              onClick={handleGenerateFromPlanning}
+              onClick={() => handleGenerateFromPlanning(false)}
               disabled={loading || Object.keys(mealPlanning.mealPlans).length === 0}
             >
               <Calendar size={16} />
               Generate from Meal Plan
             </button>
-            <button className="btn-secondary" onClick={addManualItem}>
+            <button className="btn-secondary" onClick={() => setShowAddModal(true)}>
               <Plus size={16} />
               Add Item Manually
             </button>
@@ -310,7 +353,18 @@ const GroceryPage = () => {
                               Used in: {item.usedInMeals.join(', ')}
                             </div>
                           )}
-                          <span className="item-category">{item.category}</span>
+                          <div className="item-footer">
+                            <span className="item-category">{item.category}</span>
+                            <button 
+                              className="change-store-btn"
+                              onClick={() => handleEditStore(storeName, item.id, storeName)}
+                              title="Change store"
+                            >
+                              <Store size={12} />
+                              <span>{storeName}</span>
+                              <Edit2 size={12} />
+                            </button>
+                          </div>
                         </div>
                         
                         <button 
@@ -333,6 +387,53 @@ const GroceryPage = () => {
         <div className="loading-overlay">
           <div className="loading-spinner"></div>
           <p>Generating grocery list from your meal plan...</p>
+        </div>
+      )}
+
+      {showAddModal && (
+        <AddItemModal
+          onAdd={handleAddItem}
+          onClose={() => setShowAddModal(false)}
+          existingStores={Object.keys(groceryList)}
+        />
+      )}
+
+      {editingItem && (
+        <div className="store-edit-modal" onClick={() => setEditingItem(null)}>
+          <div className="store-edit-content" onClick={(e) => e.stopPropagation()}>
+            <div className="store-edit-header">
+              <h3>Change Store for "{editingItem.name}"</h3>
+              <button onClick={() => setEditingItem(null)} className="close-btn">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="store-edit-body">
+              <p>Select a new store:</p>
+              <div className="store-options">
+                {[...new Set([...Object.keys(groceryList), 'Whole Foods', 'Costco', 'Target', 'Walmart', 'Trader Joe\'s'])].map(store => (
+                  <button
+                    key={store}
+                    className={`store-option ${store === editingItem.oldStore ? 'current' : ''}`}
+                    onClick={() => handleUpdateStore(store)}
+                  >
+                    <Store size={16} />
+                    {store}
+                  </button>
+                ))}
+              </div>
+              <div className="custom-store">
+                <input
+                  type="text"
+                  placeholder="Or enter custom store name..."
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && e.target.value.trim()) {
+                      handleUpdateStore(e.target.value.trim());
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

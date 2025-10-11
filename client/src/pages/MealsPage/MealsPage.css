@@ -108,6 +108,9 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-direction: column; /* stack content vertically */
+  /*justify-content: space-between; /* pushes content apart */
+  /*position: relative; /* for any future absolute children */
 }
 
 .meal-card:hover {
@@ -178,6 +181,10 @@
 .meal-actions {
   display: flex;
   gap: 0.75rem;
+  justify-content: center; /* horizontal center */
+  align-items: center;     /* vertical center */
+  /*margin-top: 90%;     /* pushes it to the bottom */
+  margin-bottom: 0.5rem;  /* fixed spacing from bottom */
 }
 
 .btn-primary, .btn-secondary {
@@ -208,6 +215,11 @@
 .btn-secondary:hover {
   background: #4f46e5;
   color: white;
+}
+
+.btn-icon {
+  width: 2.5rem;
+  padding: 0.5rem;
 }
 
 .empty-state {

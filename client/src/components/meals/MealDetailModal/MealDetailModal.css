@@ -230,6 +230,11 @@
   color: #333;
 }
 
+.ingredient-name1 {
+  flex: 1;
+  color: var(--text-primary);
+}
+
 .ingredient-store {
   font-size: 0.75rem;
   color: var(--text-tertiary);

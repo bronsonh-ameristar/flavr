@@ -1,8 +1,9 @@
 // client/src/pages/MealsPage/MealsPage.jsx - COMPLETE REPLACEMENT
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, Clock, Users, AlertCircle, Eye, Edit, Trash2 } from 'lucide-react';
 import { useMeals } from '../../hooks/useMeals';
+import { useViewMeals } from '../../hooks/useViewMeals';
 import MealForm from '../../components/meals/MealForm/MealForm';
 import MealDetailModal from '../../components/meals/MealDetailModal/MealDetailModal';
 import './MealsPage.css';
@@ -28,6 +29,30 @@ const MealsPage = () => {
     deleteMeal 
   } = useMeals();
 
+  const {
+    handleDeleteMeal,
+    handleAddMeal,
+    handleEditMeal,
+    handleViewMeal,
+    handleSaveMeal,
+    handleCancelForm,
+    handleRetry
+  } = useViewMeals({
+    deleteMeal,
+    updateMeal,
+    createMeal,
+    searchMeals,
+    fetchMeals,
+    setEditingMeal,
+    setShowMealForm,
+    setViewingMeal,
+    setShowMealDetail,
+    setIsSubmitting,
+    editingMeal,
+    searchTerm,
+    selectedCategory
+  });
+
   const categories = ['all', 'breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
 
   // Handle search and filter changes
@@ -43,60 +68,60 @@ const MealsPage = () => {
     return () => clearTimeout(debounceTimer);
   }, [searchTerm, selectedCategory]);
 
-  const handleDeleteMeal = async (mealId, mealName) => {
-    if (window.confirm(`Are you sure you want to delete "${mealName}"?`)) {
-      try {
-        await deleteMeal(mealId);
-      } catch (error) {
-        alert('Failed to delete meal: ' + error.message);
-      }
-    }
-  };
+  // const handleDeleteMeal = async (mealId, mealName) => {
+  //   if (window.confirm(`Are you sure you want to delete "${mealName}"?`)) {
+  //     try {
+  //       await deleteMeal(mealId);
+  //     } catch (error) {
+  //       alert('Failed to delete meal: ' + error.message);
+  //     }
+  //   }
+  // };
 
-  const handleAddMeal = () => {
-    setEditingMeal(null);
-    setShowMealForm(true);
-  };
+  // const handleAddMeal = () => {
+  //   setEditingMeal(null);
+  //   setShowMealForm(true);
+  // };
 
-  const handleEditMeal = (meal) => {
-    setEditingMeal(meal);
-    setShowMealForm(true);
-  };
+  // const handleEditMeal = (meal) => {
+  //   setEditingMeal(meal);
+  //   setShowMealForm(true);
+  // };
 
-  const handleViewMeal = (meal) => {
-    setViewingMeal(meal);
-    setShowMealDetail(true);
-  };
+  // const handleViewMeal = (meal) => {
+  //   setViewingMeal(meal);
+  //   setShowMealDetail(true);
+  // };
 
-  const handleSaveMeal = async (mealData) => {
-    setIsSubmitting(true);
-    try {
-      if (editingMeal) {
-        await updateMeal(editingMeal.id, mealData);
-      } else {
-        await createMeal(mealData);
-      }
-      setShowMealForm(false);
-      setEditingMeal(null);
-    } catch (error) {
-      throw error;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // const handleSaveMeal = async (mealData) => {
+  //   setIsSubmitting(true);
+  //   try {
+  //     if (editingMeal) {
+  //       await updateMeal(editingMeal.id, mealData);
+  //     } else {
+  //       await createMeal(mealData);
+  //     }
+  //     setShowMealForm(false);
+  //     setEditingMeal(null);
+  //   } catch (error) {
+  //     throw error;
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
-  const handleCancelForm = () => {
-    setShowMealForm(false);
-    setEditingMeal(null);
-  };
+  // const handleCancelForm = () => {
+  //   setShowMealForm(false);
+  //   setEditingMeal(null);
+  // };
 
-  const handleRetry = () => {
-    if (searchTerm.trim() || selectedCategory !== 'all') {
-      searchMeals(searchTerm.trim(), selectedCategory);
-    } else {
-      fetchMeals();
-    }
-  };
+  // const handleRetry = () => {
+  //   if (searchTerm.trim() || selectedCategory !== 'all') {
+  //     searchMeals(searchTerm.trim(), selectedCategory);
+  //   } else {
+  //     fetchMeals();
+  //   }
+  // };
 
   if (loading && meals.length === 0) {
     return (
@@ -193,8 +218,8 @@ const MealsPage = () => {
                   </div>
                 )}
               </div>
-              
-              <div className="meal-actions">
+            </div>
+            <div className="meal-actions">
                 <button 
                   className="btn-icon btn-view"
                   onClick={() => handleViewMeal(meal)}
@@ -217,7 +242,6 @@ const MealsPage = () => {
                   <Trash2 size={18} />
                 </button>
               </div>
-            </div>
           </div>
         ))}
       </div>

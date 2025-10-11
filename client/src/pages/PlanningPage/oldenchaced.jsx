@@ -1,10 +1,9 @@
-// client/src/pages/PlanningPage/EnhancedPlanningPage.jsx
+// client/src/pages/PlanningPage/EnhancedPlanningPage.jsx - COMPLETE REPLACEMENT
 import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus, ShoppingCart } from 'lucide-react';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { useMealPlanning } from '../../hooks/useMealPlanning';
 import { useMeals } from '../../hooks/useMeals';
-import { useViewMeals } from '../../hooks/useViewMeals';
 import PlanningCalendar from '../../components/planning/PlanningCalendar/PlanningCalendar';
 import StatsPanel from '../../components/planning/StatsPanel/StatsPanel';
 import AddMealModal from '../../components/planning/AddMealModal/AddMealModal';
@@ -25,13 +24,10 @@ const EnhancedPlanningPage = () => {
   const [showOccupiedSlotModal, setShowOccupiedSlotModal] = useState(false);
   const [occupiedMealType, setOccupiedMealType] = useState(null);
   const [occupiedDate, setOccupiedDate] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  // variables for view meal modal
+  const [showMealDetailModal, setShowMealDetailModal] = useState(false);
+  const [viewMeal, setViewMeal] = useState(null);
   const [showMealForm, setShowMealForm] = useState(false);
-  const [showMealDetail, setShowMealDetail] = useState(false);
-  const [editingMeal, setEditingMeal] = useState(null);
-  const [viewingMeal, setViewingMeal] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const getWeekStart = (date) => {
     const d = new Date(date);
@@ -47,16 +43,7 @@ const EnhancedPlanningPage = () => {
   const startDateStr = weekStart.toISOString().split('T')[0];
   const endDateStr = weekEnd.toISOString().split('T')[0];
 
-  const { 
-      meals, 
-      totalCount, 
-      fetchMeals,
-      searchMeals, 
-      createMeal,
-      updateMeal,
-      deleteMeal 
-    } = useMeals();
-
+  const { meals } = useMeals();
   const {
     mealPlans,
     stats,
@@ -66,29 +53,6 @@ const EnhancedPlanningPage = () => {
     removeMealFromPlan,
     generateGroceryList
   } = useMealPlanning(startDateStr, endDateStr);
-
-  // Use the new hook for meal viewing/editing
-  const {
-    showMealDetailModal,
-    handleViewMeal,
-    handleEditMeal,
-    handleSaveMeal,
-    handleCancelForm,
-    handleCloseMealDetail
-  } = useViewMeals({
-    deleteMeal,
-    updateMeal,
-    createMeal,
-    searchMeals,
-    fetchMeals,
-    setEditingMeal,
-    setShowMealForm,
-    setViewingMeal,
-    setShowMealDetail,
-    setIsSubmitting,
-    editingMeal,
-    searchTerm,
-    selectedCategory });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -115,15 +79,16 @@ const EnhancedPlanningPage = () => {
   const handleSlotClick = (date, mealType) => {
     const dateStr = date.toISOString().split('T')[0];
     const key = `${dateStr}-${mealType}`;
-    const plannedMeal = mealPlans[key]?.meal;
+    const meal = mealPlans[key]?.meal;
     
     if (mealPlans[key]) {
-      const fullMeal = meals.find(m => m.id === plannedMeal.id);
+      //if (window.confirm('Remove this meal from your plan?')) {
+      //  removeMealFromPlan(dateStr, mealType);
+      //}
       setShowOccupiedSlotModal(true);
       setOccupiedDate(dateStr);
       setOccupiedMealType(mealType);
-      // setViewingMeal(meal);
-      handleViewMeal(fullMeal || plannedMeal); // determine if we can use full array or just planned
+      setViewMeal(meal);
     } else {
       setSelectedSlot({ date: dateStr, mealType });
       setShowAddMealModal(true);
@@ -156,13 +121,15 @@ const EnhancedPlanningPage = () => {
 
     const mealId = parseInt(active.id);
     
+    // Parse the droppable ID: format is "slot-YYYY-MM-DD-mealType"
     const dropId = over.id;
     if (!dropId.startsWith('slot-')) {
       console.error('Invalid drop target:', dropId);
       return;
     }
     
-    const withoutPrefix = dropId.substring(5);
+    // Remove "slot-" prefix and split
+    const withoutPrefix = dropId.substring(5); // Remove "slot-"
     const lastDashIndex = withoutPrefix.lastIndexOf('-');
     
     if (lastDashIndex === -1) {
@@ -175,6 +142,7 @@ const EnhancedPlanningPage = () => {
 
     console.log('Drop details:', { dropId, date, mealType, mealId });
 
+    // Validation
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       alert('Invalid date format');
       return;
@@ -204,6 +172,7 @@ const EnhancedPlanningPage = () => {
       const groceryData = await generateGroceryList();
       if (groceryData && groceryData.totalItems > 0) {
         alert(`Generated grocery list with ${groceryData.totalItems} items! (Navigate to Grocery page to view)`);
+        // TODO: Store in state or navigate to grocery page
       } else {
         alert('No items to add to grocery list. Plan some meals first!');
       }
@@ -277,34 +246,30 @@ const EnhancedPlanningPage = () => {
               }}
               openViewModal={() => {
                 setShowOccupiedSlotModal(false);
-                handleViewMeal(viewingMeal);
+                setShowMealDetailModal(true);
               }}
             />
           )}
 
-        {showMealForm && (
-          <MealForm
-            meal={editingMeal}
-            onSave={handleSaveMeal}
-            onCancel={handleCancelForm}
-            isLoading={isSubmitting}
-          />
-        )}
+          {showMealDetailModal && (
+            <MealDetailModal
+              onClose={() => setShowMealDetailModal(false)}
+              meal={viewMeal}
+              onEdit={() => {
+                setViewMeal(null);
+                handleEditMeal(viewMeal);
+              }}
+            />
+          )}
 
-        {showMealDetail && viewingMeal && (
-          <MealDetailModal
-            meal={viewingMeal}
-            onClose={() => {
-              setShowMealDetail(false);
-              setViewingMeal(null);
-            }}
-            onEdit={(meal) => {
-              setShowMealDetail(false);
-              setViewingMeal(null);
-              handleEditMeal(meal);
-            }}
-          />
-        )}
+          {showMealForm && (
+        <MealForm
+          meal={editingMeal}
+          onSave={handleSaveMeal}
+          onCancel={handleCancelForm}
+          isLoading={isSubmitting}
+        />
+      )}
         </div>
 
         {error && (

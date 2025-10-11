@@ -86,7 +86,7 @@ const MealDetailModal = ({ meal, onClose, onEdit }) => {
                     <span className="ingredient-quantity">
                       {ingredient.quantity} {ingredient.unit}
                     </span>
-                    <span className="ingredient-name">{ingredient.name}</span>
+                    <span className="ingredient-name1">{ingredient.name}</span>
                     {ingredient.store && (
                       <span className="ingredient-store">{ingredient.store}</span>
                     )}

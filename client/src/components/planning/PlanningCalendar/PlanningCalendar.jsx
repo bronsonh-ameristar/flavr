@@ -38,10 +38,13 @@ const DroppableSlot = ({ date, mealType, meal, onSlotClick, isToday }) => {
           </div>
         </div>
       ) : (
-        <div className="empty-slot">
+        <button className="empty-slot-btn" onClick={(e) => {
+          e.stopPropagation();
+          onSlotClick(date, mealType);
+        }}>
           <Plus size={16} />
           <span>Add meal</span>
-        </div>
+        </button>
       )}
     </div>
   );
@@ -49,7 +52,7 @@ const DroppableSlot = ({ date, mealType, meal, onSlotClick, isToday }) => {
 
 const PlanningCalendar = ({ weekDays, mealPlans, onSlotClick, loading }) => {
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const mealTypes = ['breakfast', 'lunch', 'dinner'];
+  const mealTypes = ['breakfast', 'lunch', 'dinner', 'other'];
 
   const isToday = (date) => {
     const today = new Date();
