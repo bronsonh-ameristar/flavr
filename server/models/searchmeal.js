@@ -2,25 +2,12 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Meal extends Model {
+  class SearchMeal extends Model {
     static associate(models) {
-      Meal.hasMany(models.Ingredient, {
-        foreignKey: 'mealId',
+      SearchMeal.hasMany(models.SearchIngredient, {
+        foreignKey: 'searchMealId',
         as: 'ingredients',
         onDelete: 'CASCADE'
-      });
-
-      Meal.hasMany(models.MealPlan, {
-        foreignKey: 'mealId',
-        as: 'mealPlans',
-        onDelete: 'CASCADE'
-      });
-
-      // Optional: Track which SearchMeal this came from
-      Meal.belongsTo(models.SearchMeal, {
-        foreignKey: 'searchMealId',
-        as: 'originalSearchMeal',
-        constraints: false
       });
     }
 
@@ -35,18 +22,13 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
 
-  Meal.init({
+  SearchMeal.init({
     name: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notEmpty: {
-          msg: 'Name cannot be empty'
-        },
-        len: {
-          args: [1, 255],
-          msg: 'Name must be between 1 and 255 characters'
-        }
+        notEmpty: { msg: 'Name cannot be empty' },
+        len: { args: [1, 255], msg: 'Name must be between 1 and 255 characters' }
       }
     },
     description: {
@@ -57,26 +39,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       validate: {
-        min: {
-          args: [0],
-          msg: 'Prep time cannot be negative'
-        },
-        isInt: {
-          msg: 'Prep time must be a whole number'
-        }
+        min: { args: [0], msg: 'Prep time cannot be negative' },
+        isInt: { msg: 'Prep time must be a whole number' }
       }
     },
     cookTime: {
       type: DataTypes.INTEGER,
       allowNull: true,
       validate: {
-        min: {
-          args: [0],
-          msg: 'Cook time cannot be negative'
-        },
-        isInt: {
-          msg: 'Cook time must be a whole number'
-        }
+        min: { args: [0], msg: 'Cook time cannot be negative' },
+        isInt: { msg: 'Cook time must be a whole number' }
       }
     },
     servings: {
@@ -84,10 +56,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 1,
       validate: {
-        min: {
-          args: 1,
-          msg: 'Servings must be at least 1'
-        }
+        min: { args: 1, msg: 'Servings must be at least 1' }
       }
     },
     difficulty: {
@@ -119,15 +88,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
       validate: {
-        isUrl: {
-          msg: 'Image URL must be a valid URL'
-        }
+        isUrl: { msg: 'Image URL must be a valid URL' }
       }
     },
     source: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'local',
+      defaultValue: 'global',
       validate: {
         isIn: {
           args: [['global', 'local']],
@@ -138,24 +105,12 @@ module.exports = (sequelize, DataTypes) => {
     cuisineType: {
       type: DataTypes.STRING,
       allowNull: true
-    },
-    searchMealId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'SearchMeals',
-        key: 'id'
-      }
-    },
-    userId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'If you have user authentication, track which user owns this meal'
     }
   }, {
     sequelize,
-    modelName: 'Meal',
+    modelName: 'SearchMeal',
+    tableName: 'SearchMeals'
   });
 
-  return Meal;
+  return SearchMeal;
 };

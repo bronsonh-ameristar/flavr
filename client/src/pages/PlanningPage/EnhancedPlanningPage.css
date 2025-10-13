@@ -978,6 +978,7 @@
 
 .item-category {
   background: #f1f5f9;
+  color: var(--text-tertiary);
   padding: 0.1rem 0.5rem;
   border-radius: 12px;
   font-size: 0.8rem;

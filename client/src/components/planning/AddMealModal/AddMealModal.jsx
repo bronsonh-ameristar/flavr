@@ -1,20 +1,67 @@
 // client/src/components/planning/AddMealModal.jsx
 import React, { useState } from 'react';
 import { X, Plus } from 'lucide-react';
-import { useMeals } from '../../../hooks/useMeals'
+import { useMeals } from '../../../hooks/useMeals';
 import './AddMealModal.css';
 import MealSelector from '../../planning/MealSelector/MealSelector';
 
-const AddMealModal = ({ onClose, selected }) => {
+const AddMealModal = ({ onClose, selected, onSave }) => {
+  const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
   
+  const [selectedMeal, setSelectedMeal] = useState(null);
   const [selectedDays, setSelectedDays] = useState(selected ? [selected] : []);
+  const [frequency, setFrequency] = useState('once');
+  const [mealType, setMealType] = useState('dinner');
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState('');
+  
   const { meals } = useMeals();
+
+  const handleDayToggle = (day) => {
+    setSelectedDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
+  };
+
+  const handleFrequencyChange = (newFrequency) => {
+    setFrequency(newFrequency);
+    if (newFrequency === 'weekly') {
+      setSelectedDays(DAYS_OF_WEEK);
+    } else if (newFrequency === 'once' && selectedDays.length === 0) {
+      setSelectedDays([DAYS_OF_WEEK[0]]);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-  };
+    
+    if (!selectedMeal) {
+      alert('Please select a meal');
+      return;
+    }
+    
+    if (selectedDays.length === 0) {
+      alert('Please select at least one day');
+      return;
+    }
 
-  const handleChange = (field, value) => {
+    const scheduleData = {
+      mealId: selectedMeal.id,
+      mealType,
+      days: selectedDays,
+      frequency,
+      startDate,
+      endDate: frequency === 'once' ? null : endDate || null
+    };
+
+    onSave?.(scheduleData);
+    onClose();
   };
 
   return (
@@ -28,30 +75,147 @@ const AddMealModal = ({ onClose, selected }) => {
         </div>
 
         <form onSubmit={handleSubmit} className='add-meal-form'>
-          <div className='meal-schedule'>
-            add days here
-          </div>
-          <div className='meal-selector'>
-            <MealSelector
-              meals={meals}
-              onMealSelect={null}
-              isDragMode={true}
-            />
+          {/* Meal Type Selection */}
+          <div className='form-section'>
+            <label className='section-label'>Meal Type</label>
+            <div className='meal-type-grid'>
+              {MEAL_TYPES.map(type => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setMealType(type)}
+                  className={`meal-type-btn ${mealType === type ? 'active' : ''}`}
+                >
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
 
-        <div className="form-actions">
-          <button type="button" onClick={onClose} className="btn-cancel">
-            Cancel
-          </button>
-          <button type="submit" className="btn-add">
-            <Plus size={16} />
+          {/* Frequency Selection */}
+          <div className='form-section'>
+            <label className='section-label'>Frequency</label>
+            <div className='frequency-options'>
+              <label className='radio-option'>
+                <input
+                  type="radio"
+                  name="frequency"
+                  value="once"
+                  checked={frequency === 'once'}
+                  onChange={(e) => handleFrequencyChange(e.target.value)}
+                />
+                <div className='radio-content'>
+                  <span className='radio-title'>One-Time</span>
+                  <span className='radio-description'>Add to specific dates only</span>
+                </div>
+              </label>
+
+              <label className='radio-option'>
+                <input
+                  type="radio"
+                  name="frequency"
+                  value="weekly"
+                  checked={frequency === 'weekly'}
+                  onChange={(e) => handleFrequencyChange(e.target.value)}
+                />
+                <div className='radio-content'>
+                  <span className='radio-title'>Weekly Recurring</span>
+                  <span className='radio-description'>Repeat every week</span>
+                </div>
+              </label>
+
+              <label className='radio-option'>
+                <input
+                  type="radio"
+                  name="frequency"
+                  value="custom"
+                  checked={frequency === 'custom'}
+                  onChange={(e) => handleFrequencyChange(e.target.value)}
+                />
+                <div className='radio-content'>
+                  <span className='radio-title'>Custom Schedule</span>
+                  <span className='radio-description'>Select specific days to repeat</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Day Selection */}
+          <div className='form-section'>
+            <label className='section-label'>
+              {frequency === 'once' ? 'Select Date(s)' : 'Days of Week'}
+            </label>
+            <div className='days-grid'>
+              {DAYS_OF_WEEK.map(day => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => handleDayToggle(day)}
+                  disabled={frequency === 'weekly'}
+                  className={`day-btn ${selectedDays.includes(day) ? 'active' : ''} ${frequency === 'weekly' ? 'disabled' : ''}`}
+                >
+                  {day.slice(0, 3)}
+                </button>
+              ))}
+            </div>
+            {frequency === 'weekly' && (
+              <p className='helper-text'>All days selected for weekly schedule</p>
+            )}
+          </div>
+
+          {/* Date Range (for recurring schedules) */}
+          {frequency !== 'once' && (
+            <div className='form-section'>
+              <label className='section-label'>Schedule Period</label>
+              <div className='date-range'>
+                <div className='date-input-group'>
+                  <label>Start Date</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className='date-input-group'>
+                  <label>End Date (Optional)</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate}
+                  />
+                </div>
+              </div>
+              <p className='helper-text'>Leave end date empty for indefinite schedule</p>
+            </div>
+          )}
+
+          {/* Meal Selector */}
+          <div className='form-section'>
+            <div className='meal-selector'>
+              <MealSelector
+                meals={meals}
+                onMealSelect={(meal) => setSelectedMeal(meal)}
+                /*selectedMealId={selectedMeal?.id}*/ /*{selectedMeal && <span className='selected-indicator'>✓ {selectedMeal.name}</span>}*/
+                isDragMode={true}
+              />
+            </div>
+          </div>
+
+          <div className="form-actions">
+            <button type="button" onClick={onClose} className="btn-cancel">
+              Cancel
+            </button>
+            <button type="submit" className="btn-add" disabled={!selectedMeal}>
+              <Plus size={16} />
               Add Meal
-          </button>
-        </div>
+            </button>
+          </div>
         </form>
       </div>
     </div>
-  )
+  );
 };
 
 export default AddMealModal;

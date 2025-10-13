@@ -1,7 +1,13 @@
-// client/src/pages/GroceryPage/GroceryPage.jsx - COMPLETE REPLACEMENT
-import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Check, Plus, Store, Trash2, Calendar, RefreshCw, Edit2, X } from 'lucide-react';
+// client/src/pages/GroceryPage/GroceryPage.jsx - UPDATED WITH DIRECT UNIT CONVERTER
+import React, { useState, useEffect, useMemo } from 'react';
+import { ShoppingCart, Check, Plus, Store, Trash2, Calendar, RefreshCw, Edit2, X, ArrowRightLeft } from 'lucide-react';
 import { useMealPlanning } from '../../hooks/useMealPlanning';
+import { 
+  consolidateIngredients, 
+  convertUnit, 
+  getUnitsInCategory,
+  getUnitCategory 
+} from '../../utils/unitConverter';
 import AddItemModal from '../../components/grocery/AddItemModal/AddItemModal';
 import './GroceryPage.css';
 
@@ -12,6 +18,7 @@ const GroceryPage = () => {
   const [lastGenerated, setLastGenerated] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [convertingItem, setConvertingItem] = useState(null);
 
   // Get current week dates
   const getWeekDates = () => {
@@ -29,11 +36,43 @@ const GroceryPage = () => {
   const { startDate, endDate } = getWeekDates();
   const mealPlanning = useMealPlanning(startDate, endDate);
 
-  // Auto-generate grocery list on mount if there are meal plans (without alert)
+  // Consolidate items directly with useMemo
+  const consolidatedList = useMemo(() => {
+    if (!groceryList || Object.keys(groceryList).length === 0) {
+      return {};
+    }
+
+    const consolidated = {};
+    Object.entries(groceryList).forEach(([storeName, items]) => {
+      const consolidatedItems = consolidateIngredients(items);
+      if (consolidatedItems.length > 0) {
+        consolidated[storeName] = consolidatedItems;
+      }
+    });
+
+    return consolidated;
+  }, [groceryList]);
+
+  // Calculate totals
+  const totalItems = useMemo(() => {
+    return Object.values(consolidatedList).reduce(
+      (sum, items) => sum + items.length,
+      0
+    );
+  }, [consolidatedList]);
+
+  const completedItems = useMemo(() => {
+    return Object.values(consolidatedList).reduce(
+      (sum, items) => sum + items.filter(item => item.completed).length,
+      0
+    );
+  }, [consolidatedList]);
+
+  // Auto-generate grocery list on mount
   useEffect(() => {
     const autoGenerate = async () => {
       if (Object.keys(mealPlanning.mealPlans).length > 0 && !lastGenerated) {
-        await handleGenerateFromPlanning(true); // true = silent mode
+        await handleGenerateFromPlanning(true);
       }
     };
     
@@ -96,7 +135,7 @@ const GroceryPage = () => {
     }
   };
 
-  const stores = ['all', ...Object.keys(groceryList)];
+  const stores = ['all', ...Object.keys(consolidatedList)];
 
   const toggleItemComplete = (storeKey, itemId) => {
     setGroceryList(prev => ({
@@ -141,8 +180,8 @@ const GroceryPage = () => {
     setShowAddModal(false);
   };
 
-  const handleEditStore = (storeKey, itemId, currentStore) => {
-    const item = groceryList[storeKey].find(i => i.id === itemId);
+  const handleEditStore = (storeKey, itemId) => {
+    const item = consolidatedList[storeKey].find(i => i.id === itemId);
     if (!item) return;
     
     setEditingItem({ ...item, oldStore: storeKey });
@@ -157,29 +196,91 @@ const GroceryPage = () => {
     const oldStore = editingItem.oldStore;
     
     setGroceryList(prev => {
-      // Remove from old store
       const updatedOldStore = prev[oldStore].filter(item => item.id !== editingItem.id);
-      
-      // Add to new store
       const updatedItem = { ...editingItem, store: newStore };
       const updatedNewStore = [...(prev[newStore] || []), updatedItem];
       
       const newList = { ...prev };
       
-      // Update old store or remove if empty
       if (updatedOldStore.length === 0) {
         delete newList[oldStore];
       } else {
         newList[oldStore] = updatedOldStore;
       }
       
-      // Update new store
       newList[newStore] = updatedNewStore;
       
       return newList;
     });
     
     setEditingItem(null);
+  };
+
+  const handleConvertUnit = (storeKey, item) => {
+    setConvertingItem({ ...item, storeKey });
+  };
+
+  const handleUnitConversion = (newUnit) => {
+    if (!convertingItem || !newUnit) {
+      setConvertingItem(null);
+      return;
+    }
+
+    const convertedQty = convertUnit(
+      convertingItem.quantity, 
+      convertingItem.unit, 
+      newUnit
+    );
+    
+    if (convertedQty === null) {
+      alert('Cannot convert between these units');
+      setConvertingItem(null);
+      return;
+    }
+
+    // Update the actual grocery list (not just consolidated view)
+    setGroceryList(prev => {
+      const updatedList = { ...prev };
+      const storeItems = [...(updatedList[convertingItem.storeKey] || [])];
+      
+      // Find all items with the same normalized name and update them all
+      const normalizedName = convertingItem.normalizedName || 
+                            convertingItem.name.toLowerCase().trim()
+                              .replace(/\s+/g, ' ')
+                              .replace(/\b(fresh|dried|frozen|chopped|diced|minced|sliced|whole|ground)\b/g, '')
+                              .replace(/\s+/g, ' ')
+                              .trim();
+      
+      storeItems.forEach((item, index) => {
+        const itemNormalizedName = item.name.toLowerCase().trim()
+          .replace(/\s+/g, ' ')
+          .replace(/\b(fresh|dried|frozen|chopped|diced|minced|sliced|whole|ground)\b/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+          
+        if (itemNormalizedName === normalizedName) {
+          // Convert this item's quantity to the new unit
+          const itemConverted = convertUnit(item.quantity, item.unit, newUnit);
+          if (itemConverted !== null) {
+            storeItems[index] = {
+              ...item,
+              quantity: Math.round(itemConverted * 100) / 100,
+              unit: newUnit
+            };
+          }
+        }
+      });
+      
+      updatedList[convertingItem.storeKey] = storeItems;
+      return updatedList;
+    });
+    
+    setConvertingItem(null);
+  };
+
+  const getAvailableUnits = (item) => {
+    const category = getUnitCategory(item.unit || '');
+    return getUnitsInCategory(category);
   };
 
   const clearCompleted = () => {
@@ -198,24 +299,12 @@ const GroceryPage = () => {
 
   const getFilteredStores = () => {
     if (selectedStore === 'all') {
-      return groceryList;
+      return consolidatedList;
     }
-    return { [selectedStore]: groceryList[selectedStore] };
-  };
-
-  const getTotalItems = () => {
-    return Object.values(groceryList).reduce((sum, items) => sum + items.length, 0);
-  };
-
-  const getCompletedItems = () => {
-    return Object.values(groceryList).reduce((sum, items) => 
-      sum + items.filter(item => item.completed).length, 0
-    );
+    return { [selectedStore]: consolidatedList[selectedStore] };
   };
 
   const filteredStores = getFilteredStores();
-  const totalItems = getTotalItems();
-  const completedItems = getCompletedItems();
 
   return (
     <div className="grocery-page">
@@ -344,20 +433,36 @@ const GroceryPage = () => {
                         <div className="item-content">
                           <div className="item-main">
                             <span className="item-name">{item.name}</span>
-                            <span className="item-quantity">
-                              {item.quantity}{item.unit ? ' ' + item.unit : ''}
-                            </span>
+                            <div className="item-quantity-group">
+                              <span className="item-quantity">
+                                {item.displayQuantity || item.quantity}{item.unit ? ' ' + item.unit : ''}
+                              </span>
+                              {item.unit && (
+                                <button
+                                  className="convert-unit-btn"
+                                  onClick={() => handleConvertUnit(storeName, item)}
+                                  title="Convert unit"
+                                >
+                                  <ArrowRightLeft size={12} />
+                                </button>
+                              )}
+                            </div>
                           </div>
                           {item.usedInMeals && item.usedInMeals.length > 0 && (
                             <div className="item-meals">
                               Used in: {item.usedInMeals.join(', ')}
                             </div>
                           )}
+                          {item.originalUnits && item.originalUnits.length > 1 && (
+                            <div className="item-consolidated">
+                              Consolidated from: {item.originalUnits.map(u => `${u.quantity} ${u.unit}`).join(' + ')}
+                            </div>
+                          )}
                           <div className="item-footer">
                             <span className="item-category">{item.category}</span>
                             <button 
                               className="change-store-btn"
-                              onClick={() => handleEditStore(storeName, item.id, storeName)}
+                              onClick={() => handleEditStore(storeName, item.id)}
                               title="Change store"
                             >
                               <Store size={12} />
@@ -394,7 +499,7 @@ const GroceryPage = () => {
         <AddItemModal
           onAdd={handleAddItem}
           onClose={() => setShowAddModal(false)}
-          existingStores={Object.keys(groceryList)}
+          existingStores={Object.keys(consolidatedList)}
         />
       )}
 
@@ -410,7 +515,7 @@ const GroceryPage = () => {
             <div className="store-edit-body">
               <p>Select a new store:</p>
               <div className="store-options">
-                {[...new Set([...Object.keys(groceryList), 'Whole Foods', 'Costco', 'Target', 'Walmart', 'Trader Joe\'s'])].map(store => (
+                {[...new Set([...Object.keys(consolidatedList), 'Whole Foods', 'Costco', 'Target', 'Walmart', 'Trader Joe\'s'])].map(store => (
                   <button
                     key={store}
                     className={`store-option ${store === editingItem.oldStore ? 'current' : ''}`}
@@ -431,6 +536,36 @@ const GroceryPage = () => {
                     }
                   }}
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {convertingItem && (
+        <div className="unit-convert-modal" onClick={() => setConvertingItem(null)}>
+          <div className="unit-convert-content" onClick={(e) => e.stopPropagation()}>
+            <div className="unit-convert-header">
+              <h3>Convert Unit for "{convertingItem.name}"</h3>
+              <button onClick={() => setConvertingItem(null)} className="close-btn">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="unit-convert-body">
+              <p className="current-unit">
+                Current: <strong>{convertingItem.displayQuantity || convertingItem.quantity} {convertingItem.unit}</strong>
+              </p>
+              <p>Select new unit:</p>
+              <div className="unit-options">
+                {getAvailableUnits(convertingItem).map(unit => (
+                  <button
+                    key={unit}
+                    className={`unit-option ${unit === convertingItem.unit ? 'current' : ''}`}
+                    onClick={() => handleUnitConversion(unit)}
+                  >
+                    {unit}
+                  </button>
+                ))}
               </div>
             </div>
           </div>

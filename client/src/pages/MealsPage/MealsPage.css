@@ -222,6 +222,38 @@
   padding: 0.5rem;
 }
 
+.btn-view {
+  background: #4f46e5;
+  color: white;
+  border: 1px solid #4f46e5;
+}
+
+.btn-view:hover {
+  background: #4338ca;
+  color: white;
+}
+
+.btn-edit {
+  background: #4f46e5;
+  color: white;
+  border: 1px solid #4f46e5;
+}
+
+.btn-edit:hover {
+  background: #4338ca;
+  color: white;
+}
+
+.btn-delete {
+  color: #4f46e5;
+  background: white;
+  border: white;
+}
+
+.btn-delete:hover {
+  background: whitesmoke;
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;

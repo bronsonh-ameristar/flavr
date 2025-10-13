@@ -80,6 +80,10 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
       newErrors.servings = 'Servings must be at least 1';
     }
 
+    if (!formData.imageUrl) {
+      formData.imageUrl = "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400"
+    }
+
     // Validate ingredients
     const validIngredients = formData.ingredients.filter(ing => ing.name.trim() && ing.quantity.trim());
     if (validIngredients.length === 0) {

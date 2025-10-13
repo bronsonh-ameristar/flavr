@@ -123,7 +123,7 @@ const EnhancedPlanningPage = () => {
       setOccupiedDate(dateStr);
       setOccupiedMealType(mealType);
       // setViewingMeal(meal);
-      handleViewMeal(fullMeal || plannedMeal); // determine if we can use full array or just planned
+      setViewingMeal(fullMeal || plannedMeal); // determine if we can use full array or just planned
     } else {
       setSelectedSlot({ date: dateStr, mealType });
       setShowAddMealModal(true);
@@ -146,6 +146,7 @@ const EnhancedPlanningPage = () => {
   const handleDragStart = (event) => {
     const meal = meals.find(m => m.id === parseInt(event.active.id));
     setDraggedMeal(meal);
+    setShowAddMealModal(false);
   };
 
   const handleDragEnd = async (event) => {
@@ -197,6 +198,7 @@ const EnhancedPlanningPage = () => {
       console.error('Failed to add meal:', error);
       alert('Failed to add meal: ' + error.message);
     }
+    setShowAddMealModal(true);
   };
 
   const handleGenerateGroceryList = async () => {

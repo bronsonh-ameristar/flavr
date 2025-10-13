@@ -22,11 +22,11 @@ const OccupiedSlotModal = ({ onClose, deleteItem, openAddModal, openViewModal })
             </button>
             <button onClick={openViewModal} className="btn-primary">
               <Eye size={16} />
-              View Meal
+              View/Edit Meal
             </button>
             <button onClick={openAddModal} className="btn-primary">
               <Edit2 size={16} />
-              Edit Meal
+              Replace Meal
             </button>
         </div>
       </div>
