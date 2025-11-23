@@ -1,6 +1,6 @@
 // client/src/pages/GroceryPage/GroceryPage.jsx - UPDATED WITH DIRECT UNIT CONVERTER
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShoppingCart, Check, Plus, Store, Trash2, Calendar, RefreshCw, Edit2, X, ArrowRightLeft } from 'lucide-react';
+import { ShoppingCart, Plus, Store, Trash2, Calendar, RefreshCw, X } from 'lucide-react';
 import { useMealPlanning } from '../../hooks/useMealPlanning';
 import {
   consolidateIngredients,
@@ -9,6 +9,7 @@ import {
   getUnitCategory
 } from '../../utils/unitConverter';
 import AddItemModal from '../../components/grocery/AddItemModal/AddItemModal';
+import GroceryStoreSection from '../../components/grocery/GroceryStoreSection';
 import './GroceryPage.css';
 
 const GroceryPage = () => {
@@ -399,91 +400,17 @@ const GroceryPage = () => {
           </div>
 
           <div className="grocery-lists">
-            {Object.entries(filteredStores).map(([storeName, items]) => {
-              const storeCompleted = items.filter(item => item.completed).length;
-              const storeTotal = items.length;
-
-              return (
-                <div key={storeName} className="store-section">
-                  <div className="store-header">
-                    <div className="store-info">
-                      <h2>{storeName}</h2>
-                      <span className="store-progress">
-                        {storeCompleted}/{storeTotal} completed
-                      </span>
-                    </div>
-                    <div className="store-progress-bar">
-                      <div
-                        className="store-progress-fill"
-                        style={{ width: `${storeTotal > 0 ? (storeCompleted / storeTotal) * 100 : 0}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="items-list">
-                    {items.map(item => (
-                      <div key={item.id} className={`grocery-item ${item.completed ? 'completed' : ''}`}>
-                        <button
-                          className="complete-btn"
-                          onClick={() => toggleItemComplete(storeName, item.id)}
-                        >
-                          {item.completed ? <Check size={16} /> : <div className="empty-check"></div>}
-                        </button>
-
-                        <div className="item-content">
-                          <div className="item-main">
-                            <span className="item-name">{item.name}</span>
-                            <div className="item-quantity-group">
-                              <span className="item-quantity">
-                                {item.displayQuantity || `${item.quantity} ${item.unit || ''}`}
-                              </span>
-                              {item.unit && (
-                                <button
-                                  className="convert-unit-btn"
-                                  onClick={() => handleConvertUnit(storeName, item)}
-                                  title="Convert unit"
-                                >
-                                  <ArrowRightLeft size={12} />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          {item.usedInMeals && item.usedInMeals.length > 0 && (
-                            <div className="item-meals">
-                              Used in: {item.usedInMeals.join(', ')}
-                            </div>
-                          )}
-                          {item.originalUnits && item.originalUnits.length > 1 && (
-                            <div className="item-consolidated">
-                              Consolidated from: {item.originalUnits.map(u => `${u.quantity} ${u.unit}`).join(' + ')}
-                            </div>
-                          )}
-                          <div className="item-footer">
-                            <span className="item-category">{item.category}</span>
-                            <button
-                              className="change-store-btn"
-                              onClick={() => handleEditStore(storeName, item.id)}
-                              title="Change store"
-                            >
-                              <Store size={12} />
-                              <span>{storeName}</span>
-                              <Edit2 size={12} />
-                            </button>
-                          </div>
-                        </div>
-
-                        <button
-                          className="remove-btn"
-                          onClick={() => removeItem(storeName, item.id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+            {Object.entries(filteredStores).map(([storeName, items]) => (
+              <GroceryStoreSection
+                key={storeName}
+                storeName={storeName}
+                items={items}
+                onToggleComplete={toggleItemComplete}
+                onRemove={removeItem}
+                onEditStore={handleEditStore}
+                onConvertUnit={handleConvertUnit}
+              />
+            ))}
           </div>
         </>
       )}
