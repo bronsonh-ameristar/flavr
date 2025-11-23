@@ -11,31 +11,33 @@ export const useMeals = () => {
   const [hasMore, setHasMore] = useState(false);
 
   // Fetch all personal meals with optional filters
-  const fetchMeals = useCallback(async ({ 
-    category = 'all', 
-    search = '', 
-    limit = 50, 
-    offset = 0 
+  const fetchMeals = useCallback(async ({
+    category = 'all',
+    cuisineType = 'all',
+    search = '',
+    limit = 50,
+    offset = 0
   } = {}) => {
     setLoading(true);
     setError(null);
     try {
       const params = { limit, offset };
-      
+
       if (category && category !== 'all') params.category = category;
+      if (cuisineType && cuisineType !== 'all') params.cuisineType = cuisineType;
       if (search) params.search = search;
 
       const response = await axios.get(`${API_URL}/meals`, { params });
-      
+
       // Handle response - backend now returns response.data.data
       const mealsData = response.data?.data || [];
       const count = response.data?.totalCount || mealsData.length;
       const more = response.data?.hasMore || false;
-      
+
       setMeals(mealsData);
       setTotalCount(count);
       setHasMore(more);
-      
+
       return { meals: mealsData, totalCount: count, hasMore: more };
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to fetch meals';
@@ -66,11 +68,11 @@ export const useMeals = () => {
     try {
       const response = await axios.post(`${API_URL}/meals`, mealData);
       const newMeal = response.data?.data || response.data;
-      
+
       // Add to local state
       setMeals(prev => [newMeal, ...prev]);
       setTotalCount(prev => prev + 1);
-      
+
       return newMeal;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to create meal';
@@ -88,12 +90,12 @@ export const useMeals = () => {
     try {
       const response = await axios.put(`${API_URL}/meals/${mealId}`, mealData);
       const updatedMeal = response.data?.data || response.data;
-      
+
       // Update in local state
-      setMeals(prev => 
+      setMeals(prev =>
         prev.map(meal => meal.id === mealId ? updatedMeal : meal)
       );
-      
+
       return updatedMeal;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to update meal';
@@ -110,11 +112,11 @@ export const useMeals = () => {
     setError(null);
     try {
       await axios.delete(`${API_URL}/meals/${mealId}`);
-      
+
       // Remove from local state
       setMeals(prev => prev.filter(meal => meal.id !== mealId));
       setTotalCount(prev => prev - 1);
-      
+
       return true;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to delete meal';

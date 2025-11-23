@@ -5,11 +5,15 @@ class MealService {
     /**
      * Get all meals with pagination and filtering
      */
-    static async getAllMeals({ category, search, limit = 50, offset = 0 }) {
+    static async getAllMeals({ category, cuisineType, search, limit = 50, offset = 0 }) {
         const whereClause = {};
 
         if (category && category !== 'all') {
             whereClause.category = category;
+        }
+
+        if (cuisineType && cuisineType !== 'all') {
+            whereClause.cuisineType = cuisineType;
         }
 
         if (search) {

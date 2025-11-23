@@ -11,22 +11,23 @@ import './MealsPage.css';
 const MealsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCuisine, setSelectedCuisine] = useState('all');
   const [showMealForm, setShowMealForm] = useState(false);
   const [showMealDetail, setShowMealDetail] = useState(false);
   const [editingMeal, setEditingMeal] = useState(null);
   const [viewingMeal, setViewingMeal] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { 
-    meals, 
-    loading, 
-    error, 
-    totalCount, 
+
+  const {
+    meals,
+    loading,
+    error,
+    totalCount,
     fetchMeals,
-    searchMeals, 
+    searchMeals,
     createMeal,
     updateMeal,
-    deleteMeal 
+    deleteMeal
   } = useMeals();
 
   const {
@@ -54,74 +55,24 @@ const MealsPage = () => {
   });
 
   const categories = ['all', 'breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
+  const cuisines = ['all', 'Italian', 'Chinese', 'Mexican', 'Indian', 'Japanese', 'American', 'Thai', 'French', 'Mediterranean'];
 
   // Handle search and filter changes
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
-      if (searchTerm.trim() || selectedCategory !== 'all') {
-        searchMeals(searchTerm.trim(), selectedCategory);
+      if (searchTerm.trim() || selectedCategory !== 'all' || selectedCuisine !== 'all') {
+        fetchMeals({
+          search: searchTerm.trim(),
+          category: selectedCategory,
+          cuisineType: selectedCuisine
+        });
       } else {
         fetchMeals();
       }
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, selectedCategory]);
-
-  // const handleDeleteMeal = async (mealId, mealName) => {
-  //   if (window.confirm(`Are you sure you want to delete "${mealName}"?`)) {
-  //     try {
-  //       await deleteMeal(mealId);
-  //     } catch (error) {
-  //       alert('Failed to delete meal: ' + error.message);
-  //     }
-  //   }
-  // };
-
-  // const handleAddMeal = () => {
-  //   setEditingMeal(null);
-  //   setShowMealForm(true);
-  // };
-
-  // const handleEditMeal = (meal) => {
-  //   setEditingMeal(meal);
-  //   setShowMealForm(true);
-  // };
-
-  // const handleViewMeal = (meal) => {
-  //   setViewingMeal(meal);
-  //   setShowMealDetail(true);
-  // };
-
-  // const handleSaveMeal = async (mealData) => {
-  //   setIsSubmitting(true);
-  //   try {
-  //     if (editingMeal) {
-  //       await updateMeal(editingMeal.id, mealData);
-  //     } else {
-  //       await createMeal(mealData);
-  //     }
-  //     setShowMealForm(false);
-  //     setEditingMeal(null);
-  //   } catch (error) {
-  //     throw error;
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
-  // const handleCancelForm = () => {
-  //   setShowMealForm(false);
-  //   setEditingMeal(null);
-  // };
-
-  // const handleRetry = () => {
-  //   if (searchTerm.trim() || selectedCategory !== 'all') {
-  //     searchMeals(searchTerm.trim(), selectedCategory);
-  //   } else {
-  //     fetchMeals();
-  //   }
-  // };
+  }, [searchTerm, selectedCategory, selectedCuisine]);
 
   if (loading && meals.length === 0) {
     return (
@@ -165,18 +116,36 @@ const MealsPage = () => {
           />
         </div>
 
-        <div className="filter-section">
-          <Filter size={20} />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            {categories.map(category => (
-              <option key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </option>
-            ))}
-          </select>
+        <div className="filters-row">
+          <div className="filter-section">
+            <Filter size={20} />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              {categories.slice(1).map(category => (
+                <option key={category} value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-section">
+            <Filter size={20} />
+            <select
+              value={selectedCuisine}
+              onChange={(e) => setSelectedCuisine(e.target.value)}
+            >
+              <option value="all">All Cuisines</option>
+              {cuisines.slice(1).map(cuisine => (
+                <option key={cuisine} value={cuisine}>
+                  {cuisine}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -184,8 +153,8 @@ const MealsPage = () => {
         {meals.map(meal => (
           <div key={meal.id} className="meal-card">
             <div className="meal-image">
-              <img 
-                src={meal.imageUrl || `https://via.placeholder.com/300x200/e2e8f0/64748b?text=${encodeURIComponent(meal.name)}`} 
+              <img
+                src={meal.imageUrl || `https://via.placeholder.com/300x200/e2e8f0/64748b?text=${encodeURIComponent(meal.name)}`}
                 alt={meal.name}
                 onError={(e) => {
                   if (!e.target.dataset.fallback) {
@@ -194,13 +163,18 @@ const MealsPage = () => {
                   }
                 }}
               />
-              <div className="meal-category">{meal.category}</div>
+              <div className="meal-badges">
+                <span className="badge category-badge">{meal.category}</span>
+                {meal.cuisineType && (
+                  <span className="badge cuisine-badge">{meal.cuisineType}</span>
+                )}
+              </div>
             </div>
-            
+
             <div className="meal-content">
               <h3>{meal.name}</h3>
               <p>{meal.description || 'No description available'}</p>
-              
+
               <div className="meal-meta">
                 <div className="meta-item">
                   <Clock size={16} />
@@ -220,28 +194,28 @@ const MealsPage = () => {
               </div>
             </div>
             <div className="meal-actions">
-                <button 
-                  className="btn-icon btn-view"
-                  onClick={() => handleViewMeal(meal)}
-                  title="View Recipe"
-                >
-                  <Eye size={18} />
-                </button>
-                <button 
-                  className="btn-icon btn-edit"
-                  onClick={() => handleEditMeal(meal)}
-                  title="Edit Recipe"
-                >
-                  <Edit size={18} />
-                </button>
-                <button 
-                  className="btn-icon btn-delete"
-                  onClick={() => handleDeleteMeal(meal.id, meal.name)}
-                  title="Delete Recipe"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
+              <button
+                className="btn-icon btn-view"
+                onClick={() => handleViewMeal(meal)}
+                title="View Recipe"
+              >
+                <Eye size={18} />
+              </button>
+              <button
+                className="btn-icon btn-edit"
+                onClick={() => handleEditMeal(meal)}
+                title="Edit Recipe"
+              >
+                <Edit size={18} />
+              </button>
+              <button
+                className="btn-icon btn-delete"
+                onClick={() => handleDeleteMeal(meal.id, meal.name)}
+                title="Delete Recipe"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -250,8 +224,8 @@ const MealsPage = () => {
         <div className="empty-state">
           <h3>No recipes found</h3>
           <p>
-            {searchTerm || selectedCategory !== 'all' 
-              ? 'Try adjusting your search or filters' 
+            {searchTerm || selectedCategory !== 'all' || selectedCuisine !== 'all'
+              ? 'Try adjusting your search or filters'
               : 'Add your first recipe to get started!'
             }
           </p>
