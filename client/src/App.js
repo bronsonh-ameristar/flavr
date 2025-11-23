@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Navigation from './components/layout/Navigation/Navigation';
 import Dashboard from './pages/Dashboard/Dashboard';
 import MealsPage from './pages/MealsPage/MealsPage';
-// import PlanningPage from './pages/PlanningPage/PlanningPage';
+import SearchPage from './pages/SearchMealsPage/SearchMealsPage'
 import GroceryPage from './pages/GroceryPage/GroceryPage';
 import EnhancedPlanningPage from './pages/PlanningPage/EnhancedPlanningPage';
 import './App.css';
@@ -20,7 +20,7 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/meals" element={<MealsPage />} />
-            
+            <Route path="/search" element={<SearchPage />} />
             <Route path="/planning" element={<EnhancedPlanningPage />} />
             <Route path="/grocery" element={<GroceryPage />} />
           </Routes>

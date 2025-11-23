@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ShoppingCart, Check, Plus, Store, Trash2, Calendar, RefreshCw, Edit2, X, ArrowRightLeft } from 'lucide-react';
 import { useMealPlanning } from '../../hooks/useMealPlanning';
-import { 
-  consolidateIngredients, 
-  convertUnit, 
+import {
+  consolidateIngredients,
+  convertUnit,
   getUnitsInCategory,
-  getUnitCategory 
+  getUnitCategory
 } from '../../utils/unitConverter';
 import AddItemModal from '../../components/grocery/AddItemModal/AddItemModal';
 import './GroceryPage.css';
@@ -75,7 +75,7 @@ const GroceryPage = () => {
         await handleGenerateFromPlanning(true);
       }
     };
-    
+
     if (!mealPlanning.loading) {
       autoGenerate();
     }
@@ -85,7 +85,7 @@ const GroceryPage = () => {
     setLoading(true);
     try {
       const data = await mealPlanning.generateGroceryList();
-      
+
       if (!data || !data.groceryList) {
         if (!silent) {
           alert('No meals planned for this week. Please add meals to your calendar first.');
@@ -99,7 +99,7 @@ const GroceryPage = () => {
         if (!transformedList[store]) {
           transformedList[store] = [];
         }
-        
+
         Object.entries(categories).forEach(([category, items]) => {
           items.forEach((item) => {
             transformedList[store].push({
@@ -115,10 +115,10 @@ const GroceryPage = () => {
           });
         });
       });
-      
+
       setGroceryList(transformedList);
       setLastGenerated(new Date());
-      
+
       if (!silent) {
         const totalItems = Object.values(transformedList).reduce((sum, items) => sum + items.length, 0);
         if (totalItems > 0) {
@@ -149,12 +149,12 @@ const GroceryPage = () => {
   const removeItem = (storeKey, itemId) => {
     setGroceryList(prev => {
       const newStoreItems = prev[storeKey].filter(item => item.id !== itemId);
-      
+
       if (newStoreItems.length === 0) {
         const { [storeKey]: removed, ...rest } = prev;
         return rest;
       }
-      
+
       return {
         ...prev,
         [storeKey]: newStoreItems
@@ -164,26 +164,26 @@ const GroceryPage = () => {
 
   const handleAddItem = (itemData) => {
     const storeName = itemData.store || 'Unassigned';
-    
+
     const newItem = {
       id: `manual-${Date.now()}`,
       ...itemData,
       completed: false,
       usedInMeals: []
     };
-    
+
     setGroceryList(prev => ({
       ...prev,
       [storeName]: [...(prev[storeName] || []), newItem]
     }));
-    
+
     setShowAddModal(false);
   };
 
   const handleEditStore = (storeKey, itemId) => {
     const item = consolidatedList[storeKey].find(i => i.id === itemId);
     if (!item) return;
-    
+
     setEditingItem({ ...item, oldStore: storeKey });
   };
 
@@ -194,25 +194,25 @@ const GroceryPage = () => {
     }
 
     const oldStore = editingItem.oldStore;
-    
+
     setGroceryList(prev => {
       const updatedOldStore = prev[oldStore].filter(item => item.id !== editingItem.id);
       const updatedItem = { ...editingItem, store: newStore };
       const updatedNewStore = [...(prev[newStore] || []), updatedItem];
-      
+
       const newList = { ...prev };
-      
+
       if (updatedOldStore.length === 0) {
         delete newList[oldStore];
       } else {
         newList[oldStore] = updatedOldStore;
       }
-      
+
       newList[newStore] = updatedNewStore;
-      
+
       return newList;
     });
-    
+
     setEditingItem(null);
   };
 
@@ -227,11 +227,11 @@ const GroceryPage = () => {
     }
 
     const convertedQty = convertUnit(
-      convertingItem.quantity, 
-      convertingItem.unit, 
+      convertingItem.quantity,
+      convertingItem.unit,
       newUnit
     );
-    
+
     if (convertedQty === null) {
       alert('Cannot convert between these units');
       setConvertingItem(null);
@@ -242,22 +242,22 @@ const GroceryPage = () => {
     setGroceryList(prev => {
       const updatedList = { ...prev };
       const storeItems = [...(updatedList[convertingItem.storeKey] || [])];
-      
+
       // Find all items with the same normalized name and update them all
-      const normalizedName = convertingItem.normalizedName || 
-                            convertingItem.name.toLowerCase().trim()
-                              .replace(/\s+/g, ' ')
-                              .replace(/\b(fresh|dried|frozen|chopped|diced|minced|sliced|whole|ground)\b/g, '')
-                              .replace(/\s+/g, ' ')
-                              .trim();
-      
+      const normalizedName = convertingItem.normalizedName ||
+        convertingItem.name.toLowerCase().trim()
+          .replace(/\s+/g, ' ')
+          .replace(/\b(fresh|dried|frozen|chopped|diced|minced|sliced|whole|ground)\b/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+
       storeItems.forEach((item, index) => {
         const itemNormalizedName = item.name.toLowerCase().trim()
           .replace(/\s+/g, ' ')
           .replace(/\b(fresh|dried|frozen|chopped|diced|minced|sliced|whole|ground)\b/g, '')
           .replace(/\s+/g, ' ')
           .trim();
-          
+
         if (itemNormalizedName === normalizedName) {
           // Convert this item's quantity to the new unit
           const itemConverted = convertUnit(item.quantity, item.unit, newUnit);
@@ -270,11 +270,11 @@ const GroceryPage = () => {
           }
         }
       });
-      
+
       updatedList[convertingItem.storeKey] = storeItems;
       return updatedList;
     });
-    
+
     setConvertingItem(null);
   };
 
@@ -285,7 +285,7 @@ const GroceryPage = () => {
 
   const clearCompleted = () => {
     if (!window.confirm('Clear all completed items?')) return;
-    
+
     const newList = {};
     Object.entries(groceryList).forEach(([store, items]) => {
       const remainingItems = items.filter(item => !item.completed);
@@ -293,7 +293,7 @@ const GroceryPage = () => {
         newList[store] = remainingItems;
       }
     });
-    
+
     setGroceryList(newList);
   };
 
@@ -315,8 +315,8 @@ const GroceryPage = () => {
             <div className="progress-info">
               <span>{completedItems} of {totalItems} items completed</span>
               <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
+                <div
+                  className="progress-fill"
                   style={{ width: `${totalItems > 0 ? (completedItems / totalItems) * 100 : 0}%` }}
                 ></div>
               </div>
@@ -328,16 +328,16 @@ const GroceryPage = () => {
             </p>
           )}
         </div>
-        
+
         <div className="grocery-actions">
-          <button 
+          <button
             className="btn-secondary"
             onClick={() => setShowAddModal(true)}
           >
             <Plus size={16} />
             Add Item
           </button>
-          <button 
+          <button
             className="btn-secondary"
             onClick={clearCompleted}
             disabled={completedItems === 0}
@@ -345,7 +345,7 @@ const GroceryPage = () => {
             <Trash2 size={16} />
             Clear Completed
           </button>
-          <button 
+          <button
             className="btn-primary"
             onClick={() => handleGenerateFromPlanning(false)}
             disabled={loading}
@@ -362,7 +362,7 @@ const GroceryPage = () => {
           <h3>No Items in Your Grocery List</h3>
           <p>Generate a grocery list from your meal plan or add items manually.</p>
           <div className="empty-actions">
-            <button 
+            <button
               className="btn-primary"
               onClick={() => handleGenerateFromPlanning(false)}
               disabled={loading || Object.keys(mealPlanning.mealPlans).length === 0}
@@ -385,8 +385,8 @@ const GroceryPage = () => {
               <Store size={20} />
               <span>Filter by store:</span>
             </div>
-            <select 
-              value={selectedStore} 
+            <select
+              value={selectedStore}
               onChange={(e) => setSelectedStore(e.target.value)}
               className="store-select"
             >
@@ -402,7 +402,7 @@ const GroceryPage = () => {
             {Object.entries(filteredStores).map(([storeName, items]) => {
               const storeCompleted = items.filter(item => item.completed).length;
               const storeTotal = items.length;
-              
+
               return (
                 <div key={storeName} className="store-section">
                   <div className="store-header">
@@ -413,8 +413,8 @@ const GroceryPage = () => {
                       </span>
                     </div>
                     <div className="store-progress-bar">
-                      <div 
-                        className="store-progress-fill" 
+                      <div
+                        className="store-progress-fill"
                         style={{ width: `${storeTotal > 0 ? (storeCompleted / storeTotal) * 100 : 0}%` }}
                       ></div>
                     </div>
@@ -423,19 +423,19 @@ const GroceryPage = () => {
                   <div className="items-list">
                     {items.map(item => (
                       <div key={item.id} className={`grocery-item ${item.completed ? 'completed' : ''}`}>
-                        <button 
+                        <button
                           className="complete-btn"
                           onClick={() => toggleItemComplete(storeName, item.id)}
                         >
                           {item.completed ? <Check size={16} /> : <div className="empty-check"></div>}
                         </button>
-                        
+
                         <div className="item-content">
                           <div className="item-main">
                             <span className="item-name">{item.name}</span>
                             <div className="item-quantity-group">
                               <span className="item-quantity">
-                                {item.displayQuantity || item.quantity}{item.unit ? ' ' + item.unit : ''}
+                                {item.displayQuantity || `${item.quantity} ${item.unit || ''}`}
                               </span>
                               {item.unit && (
                                 <button
@@ -460,7 +460,7 @@ const GroceryPage = () => {
                           )}
                           <div className="item-footer">
                             <span className="item-category">{item.category}</span>
-                            <button 
+                            <button
                               className="change-store-btn"
                               onClick={() => handleEditStore(storeName, item.id)}
                               title="Change store"
@@ -471,8 +471,8 @@ const GroceryPage = () => {
                             </button>
                           </div>
                         </div>
-                        
-                        <button 
+
+                        <button
                           className="remove-btn"
                           onClick={() => removeItem(storeName, item.id)}
                         >

@@ -232,7 +232,7 @@
 
 .ingredient-name1 {
   flex: 1;
-  color: var(--text-primary);
+  color: #333;
 }
 
 .ingredient-store {

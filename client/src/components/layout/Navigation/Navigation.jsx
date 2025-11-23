@@ -1,7 +1,7 @@
 // client/src/components/layout/Navigation/Navigation.jsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ChefHat, Calendar, ShoppingCart } from 'lucide-react';
+import { Home, ChefHat, Calendar, ShoppingCart, SearchCheck } from 'lucide-react';
 import ThemeToggle from '../../common/ThemeToggle/ThemeToggle';
 import './Navigation.css';
 
@@ -19,10 +19,15 @@ const Navigation = () => {
             <Home size={20} />
             <span>Dashboard</span>
           </NavLink>
+
+          <NavLink to="/search" className="nav-link">
+            <SearchCheck size={20} />
+            <span>Search</span>
+          </NavLink>
           
           <NavLink to="/meals" className="nav-link">
             <ChefHat size={20} />
-            <span>Recipes</span>
+            <span>My Recipes</span>
           </NavLink>
           
           <NavLink to="/planning" className="nav-link">

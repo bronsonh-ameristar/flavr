@@ -1,91 +1,137 @@
-// client/src/hooks/useMeals.js
-import { useState, useEffect, useCallback } from 'react';
-import MealsService from '../services/mealsService';
+import { useState, useCallback } from 'react';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 export const useMeals = () => {
-  const [meals, setMeals] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [meals, setMeals] = useState([]);  // Initialize as empty array
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
 
-  // Fetch all meals
-  const fetchMeals = useCallback(async (params = {}) => {
+  // Fetch all personal meals with optional filters
+  const fetchMeals = useCallback(async ({ 
+    category = 'all', 
+    search = '', 
+    limit = 50, 
+    offset = 0 
+  } = {}) => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-      const result = await MealsService.getAllMeals(params);
-      setMeals(result.meals);
-      setTotalCount(result.totalCount);
-      setHasMore(result.hasMore);
-    } catch (error) {
-      setError(error.message);
-      setMeals([]);
+      const params = { limit, offset };
+      
+      if (category && category !== 'all') params.category = category;
+      if (search) params.search = search;
+
+      const response = await axios.get(`${API_URL}/meals`, { params });
+      
+      // Handle response - backend now returns response.data.data
+      const mealsData = response.data?.data || [];
+      const count = response.data?.totalCount || mealsData.length;
+      const more = response.data?.hasMore || false;
+      
+      setMeals(mealsData);
+      setTotalCount(count);
+      setHasMore(more);
+      
+      return { meals: mealsData, totalCount: count, hasMore: more };
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to fetch meals';
+      setError(errorMessage);
+      console.error('Error fetching meals:', err);
+      setMeals([]); // Set to empty array on error
+      return { meals: [], totalCount: 0, hasMore: false };
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Search meals
-  const searchMeals = useCallback(async (searchTerm, category = 'all') => {
+  // Get a single meal by ID
+  const getMealById = useCallback(async (mealId) => {
     try {
-      setLoading(true);
-      setError(null);
-      const result = await MealsService.searchMeals(searchTerm, category);
-      setMeals(result.meals);
-      setTotalCount(result.totalCount);
-      setHasMore(result.hasMore);
-    } catch (error) {
-      setError(error.message);
-      setMeals([]);
-    } finally {
-      setLoading(false);
+      const response = await axios.get(`${API_URL}/meals/${mealId}`);
+      return response.data?.data || response.data;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to fetch meal';
+      throw new Error(errorMessage);
     }
   }, []);
 
-  // Create meal
+  // Create a new meal
   const createMeal = useCallback(async (mealData) => {
+    setLoading(true);
+    setError(null);
     try {
-      const newMeal = await MealsService.createMeal(mealData);
-      setMeals(prevMeals => [newMeal, ...prevMeals]);
+      const response = await axios.post(`${API_URL}/meals`, mealData);
+      const newMeal = response.data?.data || response.data;
+      
+      // Add to local state
+      setMeals(prev => [newMeal, ...prev]);
       setTotalCount(prev => prev + 1);
+      
       return newMeal;
-    } catch (error) {
-      setError(error.message);
-      throw error;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to create meal';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // Update meal
-  const updateMeal = useCallback(async (id, mealData) => {
+  // Update an existing meal
+  const updateMeal = useCallback(async (mealId, mealData) => {
+    setLoading(true);
+    setError(null);
     try {
-      const updatedMeal = await MealsService.updateMeal(id, mealData);
-      setMeals(prevMeals => 
-        prevMeals.map(meal => meal.id === id ? updatedMeal : meal)
+      const response = await axios.put(`${API_URL}/meals/${mealId}`, mealData);
+      const updatedMeal = response.data?.data || response.data;
+      
+      // Update in local state
+      setMeals(prev => 
+        prev.map(meal => meal.id === mealId ? updatedMeal : meal)
       );
+      
       return updatedMeal;
-    } catch (error) {
-      setError(error.message);
-      throw error;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to update meal';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // Delete meal
-  const deleteMeal = useCallback(async (id) => {
+  // Delete a meal
+  const deleteMeal = useCallback(async (mealId) => {
+    setLoading(true);
+    setError(null);
     try {
-      await MealsService.deleteMeal(id);
-      setMeals(prevMeals => prevMeals.filter(meal => meal.id !== id));
+      await axios.delete(`${API_URL}/meals/${mealId}`);
+      
+      // Remove from local state
+      setMeals(prev => prev.filter(meal => meal.id !== mealId));
       setTotalCount(prev => prev - 1);
-    } catch (error) {
-      setError(error.message);
-      throw error;
+      
+      return true;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to delete meal';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // Load meals on mount
-  useEffect(() => {
-    fetchMeals();
-  }, []); // Remove fetchMeals from dependencies to prevent infinite loop
+  // Clear meals (useful for filters/reset)
+  const clearMeals = useCallback(() => {
+    setMeals([]);
+    setTotalCount(0);
+    setHasMore(false);
+    setError(null);
+  }, []);
 
   return {
     meals,
@@ -94,38 +140,10 @@ export const useMeals = () => {
     totalCount,
     hasMore,
     fetchMeals,
-    searchMeals,
+    getMealById,
     createMeal,
     updateMeal,
     deleteMeal,
-    refetch: fetchMeals
+    clearMeals
   };
-};
-
-export const useMeal = (id) => {
-  const [meal, setMeal] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchMeal = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const mealData = await MealsService.getMealById(id);
-        setMeal(mealData);
-      } catch (error) {
-        setError(error.message);
-        setMeal(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMeal();
-  }, [id]);
-
-  return { meal, loading, error };
 };

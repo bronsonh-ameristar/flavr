@@ -1,6 +1,8 @@
+// server/routes/index.js
 const express = require('express');
 const mealsRoutes = require('./meals');
 const mealPlansRoutes = require('./mealPlans');
+const searchRoutes = require('./search')
 const router = express.Router();
 
 // Health check
@@ -11,5 +13,6 @@ router.get('/health', (req, res) => {
 // Mount route modules
 router.use('/meals', mealsRoutes);
 router.use('/meal-plans', mealPlansRoutes);
+router.use('/search-meals', searchRoutes);
 
 module.exports = router;
