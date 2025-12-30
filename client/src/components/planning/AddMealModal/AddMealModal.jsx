@@ -1,14 +1,13 @@
 // client/src/components/planning/AddMealModal.jsx
 import React, { useState } from 'react';
 import { X, Plus } from 'lucide-react';
-import { useMeals } from '../../../hooks/useMeals';
 import './AddMealModal.css';
 import MealSelector from '../../planning/MealSelector/MealSelector';
 
-const AddMealModal = ({ onClose, selected, onSave }) => {
+const AddMealModal = ({ onClose, selected, onSave, meals = [] }) => {
   const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
-  
+
   const [selectedMeal, setSelectedMeal] = useState(null);
   const [selectedDays, setSelectedDays] = useState(selected ? [selected] : []);
   const [frequency, setFrequency] = useState('once');
@@ -18,8 +17,6 @@ const AddMealModal = ({ onClose, selected, onSave }) => {
     return today.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState('');
-  
-  const { meals } = useMeals();
 
   const handleDayToggle = (day) => {
     setSelectedDays(prev => 
@@ -38,14 +35,18 @@ const AddMealModal = ({ onClose, selected, onSave }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    console.log('AddMealModal handleSubmit called');
+    console.log('Selected meal:', selectedMeal);
+    console.log('Selected days:', selectedDays);
+    console.log('Meal type:', mealType);
+
     if (!selectedMeal) {
       alert('Please select a meal');
       return;
     }
-    
+
     if (selectedDays.length === 0) {
       alert('Please select at least one day');
       return;
@@ -60,8 +61,17 @@ const AddMealModal = ({ onClose, selected, onSave }) => {
       endDate: frequency === 'once' ? null : endDate || null
     };
 
-    onSave?.(scheduleData);
-    onClose();
+    console.log('Schedule data prepared:', scheduleData);
+
+    if (onSave) {
+      console.log('Calling onSave callback...');
+      await onSave(scheduleData);
+      console.log('onSave completed');
+    } else {
+      console.log('No onSave callback provided, closing modal');
+      // If no onSave callback, just close
+      onClose();
+    }
   };
 
   return (
@@ -193,11 +203,14 @@ const AddMealModal = ({ onClose, selected, onSave }) => {
 
           {/* Meal Selector */}
           <div className='form-section'>
+            <label className='section-label'>
+              Select Meal {selectedMeal && <span className='selected-indicator'>- {selectedMeal.name} selected</span>}
+            </label>
             <div className='meal-selector'>
               <MealSelector
                 meals={meals}
                 onMealSelect={(meal) => setSelectedMeal(meal)}
-                /*selectedMealId={selectedMeal?.id}*/ /*{selectedMeal && <span className='selected-indicator'>✓ {selectedMeal.name}</span>}*/
+                selectedMealId={selectedMeal?.id}
                 isDragMode={true}
               />
             </div>

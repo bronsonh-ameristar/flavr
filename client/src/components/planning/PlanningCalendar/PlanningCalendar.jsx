@@ -6,10 +6,10 @@ import './PlanningCalendar.css';
 
 const DroppableSlot = ({ date, mealType, meal, onSlotClick, isToday }) => {
   const dateStr = date.toISOString().split('T')[0];
-  
+
   // Use a clear prefix to identify droppable slots: "slot-YYYY-MM-DD-mealType"
   const dropId = `slot-${dateStr}-${mealType}`;
-  
+
   const { isOver, setNodeRef } = useDroppable({
     id: dropId,
   });
@@ -18,11 +18,11 @@ const DroppableSlot = ({ date, mealType, meal, onSlotClick, isToday }) => {
     <div
       ref={setNodeRef}
       className={`meal-slot ${isToday ? 'today' : ''} ${isOver ? 'drag-over' : ''} ${meal ? 'occupied' : 'empty'}`}
-      onClick={() => onSlotClick(date, mealType)}
+      onClick={() => onSlotClick(dateStr, mealType)}
     >
       {meal ? (
         <div className="planned-meal">
-          <img 
+          <img
             src={meal.imageUrl || `https://via.placeholder.com/60x60/e2e8f0/64748b?text=${encodeURIComponent(meal.name)}`}
             alt={meal.name}
             onError={(e) => {
@@ -40,7 +40,7 @@ const DroppableSlot = ({ date, mealType, meal, onSlotClick, isToday }) => {
       ) : (
         <button className="empty-slot-btn" onClick={(e) => {
           e.stopPropagation();
-          onSlotClick(date, mealType);
+          onSlotClick(dateStr, mealType);
         }}>
           <Plus size={16} />
           <span>Add meal</span>

@@ -6,6 +6,7 @@ import { useMeals } from '../../hooks/useMeals';
 import { useViewMeals } from '../../hooks/useViewMeals';
 import MealForm from '../../components/meals/MealForm/MealForm';
 import MealDetailModal from '../../components/meals/MealDetailModal/MealDetailModal';
+import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
 import './MealsPage.css';
 
 const MealsPage = () => {
@@ -17,6 +18,9 @@ const MealsPage = () => {
   const [editingMeal, setEditingMeal] = useState(null);
   const [viewingMeal, setViewingMeal] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [mealToDelete, setMealToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const {
     meals,
@@ -56,6 +60,32 @@ const MealsPage = () => {
 
   const categories = ['all', 'breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
   const cuisines = ['all', 'Italian', 'Chinese', 'Mexican', 'Indian', 'Japanese', 'American', 'Thai', 'French', 'Mediterranean'];
+
+  // Custom delete handlers
+  const handleDeleteClick = (meal) => {
+    setMealToDelete(meal);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!mealToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteMeal(mealToDelete.id);
+      setShowDeleteModal(false);
+      setMealToDelete(null);
+    } catch (error) {
+      alert('Failed to delete meal: ' + error.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setMealToDelete(null);
+  };
 
   // Handle search and filter changes
   useEffect(() => {
@@ -210,7 +240,7 @@ const MealsPage = () => {
               </button>
               <button
                 className="btn-icon btn-delete"
-                onClick={() => handleDeleteMeal(meal.id, meal.name)}
+                onClick={() => handleDeleteClick(meal)}
                 title="Delete Recipe"
               >
                 <Trash2 size={18} />
@@ -265,6 +295,15 @@ const MealsPage = () => {
           }}
         />
       )}
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        itemName={mealToDelete?.name}
+        itemType="recipe"
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 // client/src/pages/PlanningPage/EnhancedPlanningPage.jsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, ShoppingCart } from 'lucide-react';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { useMealPlanning } from '../../hooks/useMealPlanning';
@@ -33,6 +33,14 @@ const EnhancedPlanningPage = () => {
   const [viewingMeal, setViewingMeal] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
   const getWeekStart = (date) => {
     const d = new Date(date);
     const day = d.getDay();
@@ -47,15 +55,29 @@ const EnhancedPlanningPage = () => {
   const startDateStr = weekStart.toISOString().split('T')[0];
   const endDateStr = weekEnd.toISOString().split('T')[0];
 
-  const { 
-      meals, 
-      totalCount, 
-      fetchMeals,
-      searchMeals, 
-      createMeal,
-      updateMeal,
-      deleteMeal 
-    } = useMeals();
+  // Generate week days for calendar
+  const weekDays = [];
+  let current = new Date(weekStart);
+  for (let i = 0; i < 7; i++) {
+    weekDays.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+
+  const navigateWeek = (direction) => {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + (direction * 7));
+    setCurrentDate(newDate);
+  };
+
+  const {
+    meals,
+    totalCount,
+    fetchMeals,
+    searchMeals,
+    createMeal,
+    updateMeal,
+    deleteMeal
+  } = useMeals();
 
   const {
     mealPlans,
@@ -69,12 +91,10 @@ const EnhancedPlanningPage = () => {
 
   // Use the new hook for meal viewing/editing
   const {
-    showMealDetailModal,
-    handleViewMeal,
-    handleEditMeal,
-    handleSaveMeal,
-    handleCancelForm,
-    handleCloseMealDetail
+    handleViewClick,
+    handleEditClick,
+    handleDeleteClick,
+    handleMealSubmit
   } = useViewMeals({
     deleteMeal,
     updateMeal,
@@ -88,46 +108,31 @@ const EnhancedPlanningPage = () => {
     setIsSubmitting,
     editingMeal,
     searchTerm,
-    selectedCategory });
+    selectedCategory
+  });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
+  useEffect(() => {
+    fetchMeals();
+  }, [fetchMeals]);
 
-  const weekDays = useMemo(() => {
-    return Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(weekStart);
-      date.setDate(weekStart.getDate() + i);
-      return date;
-    });
-  }, [weekStart]);
-
-  const navigateWeek = (direction) => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() + (direction * 7));
-    setCurrentDate(newDate);
-  };
-
-  const handleSlotClick = (date, mealType) => {
-    const dateStr = date.toISOString().split('T')[0];
+  const handleSlotClick = (dateStr, mealType) => {
+    console.log('Slot clicked:', { dateStr, mealType });
     const key = `${dateStr}-${mealType}`;
     const plannedMeal = mealPlans[key]?.meal;
-    
+    console.log('Planned meal for slot:', plannedMeal);
+
     if (mealPlans[key]) {
       const fullMeal = meals.find(m => m.id === plannedMeal.id);
+      console.log('Opening OccupiedSlotModal for meal:', fullMeal || plannedMeal);
       setShowOccupiedSlotModal(true);
       setOccupiedDate(dateStr);
       setOccupiedMealType(mealType);
-      // setViewingMeal(meal);
-      setViewingMeal(fullMeal || plannedMeal); // determine if we can use full array or just planned
+      setViewingMeal(fullMeal || plannedMeal);
     } else {
+      console.log('Opening AddMealModal for empty slot');
       setSelectedSlot({ date: dateStr, mealType });
       setShowAddMealModal(true);
-      setSelectedDays([])
+      setSelectedDays([]);
     }
   };
 
@@ -156,21 +161,21 @@ const EnhancedPlanningPage = () => {
     if (!over) return;
 
     const mealId = parseInt(active.id);
-    
+
     const dropId = over.id;
     if (!dropId.startsWith('slot-')) {
       console.error('Invalid drop target:', dropId);
       return;
     }
-    
+
     const withoutPrefix = dropId.substring(5);
     const lastDashIndex = withoutPrefix.lastIndexOf('-');
-    
+
     if (lastDashIndex === -1) {
       console.error('Invalid drop ID format:', dropId);
       return;
     }
-    
+
     const date = withoutPrefix.substring(0, lastDashIndex);
     const mealType = withoutPrefix.substring(lastDashIndex + 1);
 
@@ -214,6 +219,25 @@ const EnhancedPlanningPage = () => {
     }
   };
 
+  // Handlers for modals
+  const handleSaveMeal = async (formData) => {
+    await handleMealSubmit(formData);
+  };
+
+  const handleCancelForm = () => {
+    setShowMealForm(false);
+    setEditingMeal(null);
+  };
+
+  const handleViewMeal = (meal) => {
+    setViewingMeal(meal);
+    setShowMealDetail(true);
+  };
+
+  const handleEditMeal = (meal) => {
+    handleEditClick(meal);
+  };
+
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="enhanced-planning-page">
@@ -225,10 +249,10 @@ const EnhancedPlanningPage = () => {
                 <ChevronLeft size={20} />
               </button>
               <span className="week-display">
-                Week of {weekStart.toLocaleDateString('en-US', { 
-                  month: 'long', 
-                  day: 'numeric', 
-                  year: 'numeric' 
+                Week of {weekStart.toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
                 })}
               </span>
               <button onClick={() => navigateWeek(1)} className="nav-btn">
@@ -238,7 +262,7 @@ const EnhancedPlanningPage = () => {
           </div>
 
           <div className="planning-actions">
-            <button 
+            <button
               className="btn-secondary"
               onClick={() => {
                 setSelectedSlot(null);
@@ -249,7 +273,7 @@ const EnhancedPlanningPage = () => {
               <Plus size={16} />
               Quick Add Meal
             </button>
-            <button 
+            <button
               className="btn-primary"
               onClick={handleGenerateGroceryList}
               disabled={Object.keys(mealPlans).length === 0}
@@ -261,8 +285,42 @@ const EnhancedPlanningPage = () => {
 
           {showAddMealModal && (
             <AddMealModal
-              onClose={() => setShowAddMealModal(false)}
+              onClose={() => {
+                setShowAddMealModal(false);
+                setSelectedSlot(null);
+              }}
               selected={selectedDays}
+              meals={meals}
+              onSave={async (scheduleData) => {
+                console.log('onSave called with:', scheduleData);
+                console.log('selectedSlot:', selectedSlot);
+                try {
+                  // If a specific slot was clicked, use that slot directly
+                  if (selectedSlot) {
+                    console.log(`Adding meal ${scheduleData.mealId} to slot:`, selectedSlot);
+                    await addMealToPlan(selectedSlot.date, selectedSlot.mealType, scheduleData.mealId);
+                  } else {
+                    // Otherwise, add meal to each selected day
+                    console.log('Adding meal to multiple days:', scheduleData.days);
+                    for (const day of scheduleData.days) {
+                      // Convert day name to actual date
+                      const dayIndex = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(day);
+                      const targetDate = new Date(weekStart);
+                      targetDate.setDate(weekStart.getDate() + dayIndex);
+                      const dateStr = targetDate.toISOString().split('T')[0];
+                      console.log(`Adding meal to ${day} (${dateStr})`);
+
+                      await addMealToPlan(dateStr, scheduleData.mealType, scheduleData.mealId);
+                    }
+                  }
+                  console.log('Meal(s) added successfully');
+                  setShowAddMealModal(false);
+                  setSelectedSlot(null);
+                } catch (error) {
+                  console.error('Failed to add meal to plan:', error);
+                  alert('Failed to add meal: ' + error.message);
+                }
+              }}
             />
           )}
 
@@ -284,29 +342,29 @@ const EnhancedPlanningPage = () => {
             />
           )}
 
-        {showMealForm && (
-          <MealForm
-            meal={editingMeal}
-            onSave={handleSaveMeal}
-            onCancel={handleCancelForm}
-            isLoading={isSubmitting}
-          />
-        )}
+          {showMealForm && (
+            <MealForm
+              meal={editingMeal}
+              onSave={handleSaveMeal}
+              onCancel={handleCancelForm}
+              isLoading={isSubmitting}
+            />
+          )}
 
-        {showMealDetail && viewingMeal && (
-          <MealDetailModal
-            meal={viewingMeal}
-            onClose={() => {
-              setShowMealDetail(false);
-              setViewingMeal(null);
-            }}
-            onEdit={(meal) => {
-              setShowMealDetail(false);
-              setViewingMeal(null);
-              handleEditMeal(meal);
-            }}
-          />
-        )}
+          {showMealDetail && viewingMeal && (
+            <MealDetailModal
+              meal={viewingMeal}
+              onClose={() => {
+                setShowMealDetail(false);
+                setViewingMeal(null);
+              }}
+              onEdit={(meal) => {
+                setShowMealDetail(false);
+                setViewingMeal(null);
+                handleEditMeal(meal);
+              }}
+            />
+          )}
         </div>
 
         {error && (
@@ -323,7 +381,7 @@ const EnhancedPlanningPage = () => {
               onSlotClick={handleSlotClick}
               loading={loading}
             />
-            
+
             <StatsPanel stats={stats} />
           </div>
         </div>

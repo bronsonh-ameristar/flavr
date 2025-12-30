@@ -136,9 +136,9 @@
 }
 
 .selected-indicator {
-  color: var(--success-color, #10b981);
-  font-weight: 500;
-  margin-left: 0.5rem;
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
 /* Meal Type Grid */

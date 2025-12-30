@@ -12,6 +12,7 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
     servings: meal?.servings || 4,
     difficulty: meal?.difficulty || 'easy',
     category: meal?.category || 'dinner',
+    cuisineType: meal?.cuisineType || '',
     instructions: meal?.instructions || '',
     imageUrl: meal?.imageUrl || '',
     ingredients: meal?.ingredients || [{ name: '', quantity: '', unit: '', category: 'pantry' }]
@@ -21,6 +22,7 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
 
   const categories = ['breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
   const difficulties = ['easy', 'medium', 'hard'];
+  const cuisineTypes = ['Italian', 'Mexican', 'Chinese', 'Japanese', 'Indian', 'Thai', 'French', 'American', 'Mediterranean', 'Greek', 'Spanish', 'Korean', 'Vietnamese', 'Middle Eastern', 'Caribbean', 'African', 'British', 'German', 'Other'];
   const ingredientCategories = ['produce', 'meat', 'dairy', 'pantry', 'spices', 'frozen', 'other'];
   const commonUnits = ['cup', 'cups', 'tbsp', 'tsp', 'lb', 'lbs', 'oz', 'g', 'kg', 'ml', 'l', 'piece', 'pieces', 'clove', 'cloves'];
   const commonStores = ['Whole Foods', 'Costco', 'Target', 'Walmart', 'Trader Joe\'s', 'Local Market', 'Other'];
@@ -169,6 +171,22 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
                   ))}
                 </select>
               </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="cuisineType">Cuisine Type</label>
+              <select
+                id="cuisineType"
+                value={formData.cuisineType}
+                onChange={(e) => handleInputChange('cuisineType', e.target.value)}
+              >
+                <option value="">Select Cuisine Type</option>
+                {cuisineTypes.map(cuisine => (
+                  <option key={cuisine} value={cuisine}>
+                    {cuisine}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="form-group">

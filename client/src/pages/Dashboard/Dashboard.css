@@ -1,4 +1,4 @@
-/* client/src/pages/Dashboard/Dashboard.css */
+/* client/src/pages/Dashboard/Dashboard.css - Consolidated and Corrected */
 .dashboard {
   padding: 2rem;
   max-width: 1200px;
@@ -64,6 +64,7 @@
   font-size: 0.9rem;
 }
 
+/* --- QUICK ACTIONS SECTION STYLES --- */
 .quick-actions {
   margin-bottom: 2rem;
 }
@@ -81,6 +82,8 @@
 }
 
 .action-card {
+  /* Critical for full card clickability */
+  display: block;
   background: var(--bg-primary);
   border-radius: 8px;
   padding: 1.5rem;
@@ -114,6 +117,7 @@
   font-size: 0.9rem;
 }
 
+/* --- RECENT ACTIVITY SECTION STYLES --- */
 .recent-activity h2 {
   font-size: 1.8rem;
   color: var(--text-primary);
@@ -156,20 +160,133 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 768px) {
-  .dashboard {
-    padding: 1rem;
-  }
-  
-  .dashboard-header h1 {
-    font-size: 2rem;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .actions-grid {
-    grid-template-columns: 1fr;
-  }
+/* --- TODAY'S PLAN SECTION STYLES --- */
+.today-plan-section {
+  /* Using variables from the existing code's theme context */
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-primary);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: var(--text-primary);
+}
+
+.date-badge {
+  background: var(--bg-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.today-meals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.today-meal-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.today-meal-card:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.meal-type-badge {
+  /* Assuming a --primary-light variable exists for background */
+  background: var(--primary-light, #e0f7fa);
+  color: var(--primary-color);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-right: 1rem;
+  min-width: 80px;
+  text-align: center;
+}
+
+.meal-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 1rem;
+}
+
+.meal-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.meal-details h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.meal-meta-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.view-btn {
+  padding: 0.5rem;
+  color: var(--text-secondary);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.view-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--primary-color);
+}
+
+.empty-today-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+}
+
+.empty-today-state p {
+  margin-bottom: 1rem;
+}
+
+.btn-text {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.btn-text:hover {
+  opacity: 0.8;
+  text-decoration: underline;
 }
