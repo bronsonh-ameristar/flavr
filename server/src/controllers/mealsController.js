@@ -1,7 +1,7 @@
 const MealService = require('../services/mealService');
 
 class MealsController {
-  // Get all meals with ingredients
+  // Get all private meals with ingredients
   static async getAllMeals(req, res) {
     try {
       const result = await MealService.getAllMeals(req.query);
@@ -135,15 +135,103 @@ class MealsController {
     }
   }
 
-  // Check if meal is already in personal
-  static async checkGlobalMeal(req, res) {
+  // PUBLIC MEAL ENDPOINTS
+
+  // Get all public meals with filters
+  static async getPublicMeals(req, res) {
     try {
-      const hasMeal = await MealService.checkGlobalMeal(req.params.id);
+      const result = await MealService.getPublicMeals(req.query);
+
+      res.json({
+        ...result,
+        success: true
+      });
+    } catch (error) {
+      console.error('Error fetching public meals:', error);
+      res.status(500).json({
+        error: 'Failed to fetch public meals',
+        message: error.message,
+        success: false
+      });
+    }
+  }
+
+  // Get top N public meals
+  static async getTopPublicMeals(req, res) {
+    try {
+      const { limit = 10 } = req.query;
+      const result = await MealService.getTopPublicMeals(limit);
+
+      res.json({
+        ...result,
+        success: true
+      });
+    } catch (error) {
+      console.error('Error fetching top public meals:', error);
+      res.status(500).json({
+        error: 'Failed to fetch top public meals',
+        message: error.message,
+        success: false
+      });
+    }
+  }
+
+  // Search public meals with filters
+  static async searchPublicMeals(req, res) {
+    try {
+      const result = await MealService.getPublicMeals(req.query);
+
+      res.json({
+        ...result,
+        success: true
+      });
+    } catch (error) {
+      console.error('Error searching public meals:', error);
+      res.status(500).json({
+        error: 'Failed to search public meals',
+        message: error.message,
+        success: false
+      });
+    }
+  }
+
+  // Get single public meal by ID
+  static async getPublicMealById(req, res) {
+    try {
+      const meal = await MealService.getPublicMealById(req.params.id);
+
+      res.json({
+        data: meal,
+        success: true
+      });
+    } catch (error) {
+      console.error('Error fetching public meal:', error);
+
+      if (error.message === 'Public meal not found') {
+        return res.status(404).json({
+          error: 'Public meal not found',
+          success: false
+        });
+      }
+
+      res.status(500).json({
+        error: 'Failed to fetch public meal',
+        message: error.message,
+        success: false
+      });
+    }
+  }
+
+  // Check if public meal is already in user's private collection
+  static async checkPublicMeal(req, res) {
+    try {
+      const hasMeal = await MealService.checkPublicMeal(req.params.id);
       return res.status(200).json({
         hasMeal,
         success: true
       });
     } catch (error) {
+      console.error('Error checking public meal:', error);
       res.status(500).json({
         error: 'Failed to check for meal',
         message: error.message,
@@ -152,10 +240,10 @@ class MealsController {
     }
   }
 
-  // add global meal to local list
-  static async addGlobalMeal(req, res) {
+  // Add public meal to user's private collection
+  static async addPublicMeal(req, res) {
     try {
-      const meal = await MealService.addGlobalMeal(req.params.id);
+      const meal = await MealService.addPublicMeal(req.params.id);
 
       res.status(201).json({
         message: 'Meal successfully added to your collection',
@@ -164,11 +252,11 @@ class MealsController {
       });
 
     } catch (error) {
-      console.error('Error adding global meal to personal list:', error);
+      console.error('Error adding public meal to personal list:', error);
 
-      if (error.message === 'Global meal not found') {
+      if (error.message === 'Public meal not found') {
         return res.status(404).json({
-          error: 'Global meal not found',
+          error: 'Public meal not found',
           success: false
         });
       }
@@ -190,7 +278,7 @@ class MealsController {
       }
 
       res.status(500).json({
-        error: 'Failed to add global meal to personal list',
+        error: 'Failed to add public meal to personal list',
         message: error.message,
         success: false
       });

@@ -1,12 +1,14 @@
-const { Meal, Ingredient, SearchMeal, SearchIngredient } = require('../../models');
+const { Meal, Ingredient } = require('../../models');
 const { Op } = require('sequelize');
 
 class MealService {
     /**
-     * Get all meals with pagination and filtering
+     * Get all private meals with pagination and filtering
      */
     static async getAllMeals({ category, cuisineType, search, limit = 50, offset = 0 }) {
-        const whereClause = {};
+        const whereClause = {
+            visibility: 'private'
+        };
 
         if (category && category !== 'all') {
             whereClause.category = category;
@@ -28,7 +30,7 @@ class MealService {
             include: [{
                 model: Ingredient,
                 as: 'ingredients',
-                attributes: ['id', 'name', 'quantity', 'unit', 'category']
+                attributes: ['id', 'name', 'quantity', 'unit', 'category', 'notes']
             }],
             limit: parseInt(limit),
             offset: parseInt(offset),
@@ -50,7 +52,7 @@ class MealService {
             include: [{
                 model: Ingredient,
                 as: 'ingredients',
-                attributes: ['id', 'name', 'quantity', 'unit', 'category']
+                attributes: ['id', 'name', 'quantity', 'unit', 'category', 'notes']
             }]
         });
 
@@ -75,6 +77,9 @@ class MealService {
         if (mealData.servings !== undefined) {
             mealData.servings = parseInt(mealData.servings) || 1;
         }
+
+        // Ensure visibility is set to private for user-created meals
+        mealData.visibility = 'private';
 
         // Create meal
         const meal = await Meal.create(mealData);
@@ -151,36 +156,171 @@ class MealService {
     }
 
     /**
-     * Check if a global meal exists in personal collection
+     * Get all public meals with pagination and filtering
      */
-    static async checkGlobalMeal(id) {
-        const numPresent = await Meal.findAndCountAll({ where: { id } });
-        return numPresent.count > 0;
+    static async getPublicMeals({
+        search,
+        category,
+        cuisineType,
+        difficulty,
+        maxPrepTime,
+        maxCookTime,
+        limit = 20,
+        offset = 0
+    }) {
+        const whereClause = {
+            visibility: 'public'
+        };
+
+        // Text search in name, description, and instructions
+        if (search) {
+            whereClause[Op.or] = [
+                { name: { [Op.iLike]: `%${search}%` } },
+                { description: { [Op.iLike]: `%${search}%` } },
+                { instructions: { [Op.iLike]: `%${search}%` } }
+            ];
+        }
+
+        // Filter by category
+        if (category && category !== 'all') {
+            whereClause.category = category;
+        }
+
+        // Filter by difficulty
+        if (difficulty && difficulty !== 'all') {
+            whereClause.difficulty = difficulty;
+        }
+
+        // Filter by cuisine type
+        if (cuisineType && cuisineType !== 'all') {
+            whereClause.cuisineType = cuisineType;
+        }
+
+        // Filter by max prep time
+        if (maxPrepTime) {
+            whereClause.prepTime = { [Op.lte]: parseInt(maxPrepTime) };
+        }
+
+        // Filter by max cook time
+        if (maxCookTime) {
+            whereClause.cookTime = { [Op.lte]: parseInt(maxCookTime) };
+        }
+
+        const meals = await Meal.findAndCountAll({
+            where: whereClause,
+            include: [{
+                model: Ingredient,
+                as: 'ingredients',
+                attributes: ['id', 'name', 'quantity', 'unit', 'notes']
+            }],
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            order: [['name', 'ASC']]
+        });
+
+        return {
+            data: meals.rows,
+            totalCount: meals.count,
+            hasMore: (parseInt(offset) + parseInt(limit)) < meals.count
+        };
     }
 
     /**
-     * Add a global meal to personal collection
+     * Get top N public meals
      */
-    static async addGlobalMeal(id) {
-        // Find the global meal with its ingredients
-        const globalMeal = await SearchMeal.findByPk(id, {
+    static async getTopPublicMeals(limit = 10) {
+        const meals = await Meal.findAll({
+            where: { visibility: 'public' },
             include: [{
-                model: SearchIngredient,
+                model: Ingredient,
+                as: 'ingredients',
+                attributes: ['id', 'name', 'quantity', 'unit', 'notes']
+            }],
+            limit: parseInt(limit),
+            order: [['createdAt', 'DESC']]
+        });
+
+        return {
+            data: meals,
+            totalCount: meals.length
+        };
+    }
+
+    /**
+     * Get a single public meal by ID
+     */
+    static async getPublicMealById(id) {
+        const meal = await Meal.findOne({
+            where: { id, visibility: 'public' },
+            include: [{
+                model: Ingredient,
+                as: 'ingredients',
+                attributes: ['id', 'name', 'quantity', 'unit', 'notes']
+            }]
+        });
+
+        if (!meal) {
+            throw new Error('Public meal not found');
+        }
+
+        return meal;
+    }
+
+    /**
+     * Check if a public meal exists in user's private collection
+     */
+    static async checkPublicMeal(publicMealId, userId = null) {
+        // First find the public meal to get its name
+        const publicMeal = await Meal.findOne({
+            where: { id: publicMealId, visibility: 'public' }
+        });
+
+        if (!publicMeal) {
+            return false;
+        }
+
+        // Check if a private meal with the same name exists
+        const whereClause = {
+            name: publicMeal.name,
+            visibility: 'private'
+        };
+
+        if (userId) {
+            whereClause.userId = userId;
+        }
+
+        const existingMeal = await Meal.findOne({ where: whereClause });
+        return !!existingMeal;
+    }
+
+    /**
+     * Add a public meal to user's private collection
+     */
+    static async addPublicMeal(publicMealId, userId = null) {
+        // Find the public meal with its ingredients
+        const publicMeal = await Meal.findOne({
+            where: { id: publicMealId, visibility: 'public' },
+            include: [{
+                model: Ingredient,
                 as: 'ingredients'
             }]
         });
 
-        if (!globalMeal) {
-            throw new Error('Global meal not found');
+        if (!publicMeal) {
+            throw new Error('Public meal not found');
         }
 
-        // Check if meal already exists in personal collection
-        const existingMeal = await Meal.findOne({
-            where: {
-                name: globalMeal.name,
-                description: globalMeal.description
-            }
-        });
+        // Check if meal already exists in private collection
+        const whereClause = {
+            name: publicMeal.name,
+            visibility: 'private'
+        };
+
+        if (userId) {
+            whereClause.userId = userId;
+        }
+
+        const existingMeal = await Meal.findOne({ where: whereClause });
 
         if (existingMeal) {
             const error = new Error('Meal already exists in your collection');
@@ -189,36 +329,33 @@ class MealService {
             throw error;
         }
 
-        // Create the meal in the personal collection
+        // Create the meal in the private collection
         const mealData = {
-            name: globalMeal.name,
-            description: globalMeal.description,
-            prepTime: globalMeal.prepTime,
-            cookTime: globalMeal.cookTime,
-            servings: globalMeal.servings,
-            difficulty: globalMeal.difficulty,
-            category: globalMeal.category,
-            instructions: globalMeal.instructions,
-            imageUrl: globalMeal.imageUrl,
-            cuisineType: globalMeal.cuisineType
+            name: publicMeal.name,
+            description: publicMeal.description,
+            prepTime: publicMeal.prepTime,
+            cookTime: publicMeal.cookTime,
+            servings: publicMeal.servings,
+            difficulty: publicMeal.difficulty,
+            category: publicMeal.category,
+            instructions: publicMeal.instructions,
+            imageUrl: publicMeal.imageUrl,
+            cuisineType: publicMeal.cuisineType,
+            visibility: 'private',
+            userId: userId
         };
 
         const newMeal = await Meal.create(mealData);
 
-        // Copy ingredients to the personal collection
-        if (globalMeal.ingredients && globalMeal.ingredients.length > 0) {
-            const ingredientPromises = globalMeal.ingredients.map(ingredient => {
-                // Append notes to name if present, as Ingredient model doesn't have notes field
-                // and category is an enum
-                const nameWithNotes = ingredient.notes
-                    ? `${ingredient.name} (${ingredient.notes})`
-                    : ingredient.name;
-
+        // Copy ingredients to the private collection
+        if (publicMeal.ingredients && publicMeal.ingredients.length > 0) {
+            const ingredientPromises = publicMeal.ingredients.map(ingredient => {
                 return Ingredient.create({
-                    name: nameWithNotes,
+                    name: ingredient.name,
                     quantity: ingredient.quantity,
                     unit: ingredient.unit,
-                    category: 'other', // Default to 'other' as we can't reliably map notes to category enum
+                    notes: ingredient.notes,
+                    category: ingredient.category || 'other',
                     mealId: newMeal.id
                 });
             });

@@ -56,6 +56,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     mealId: {
       type: DataTypes.INTEGER,
       allowNull: false,

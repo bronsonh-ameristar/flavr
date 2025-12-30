@@ -15,13 +15,6 @@ module.exports = (sequelize, DataTypes) => {
         as: 'mealPlans',
         onDelete: 'CASCADE'
       });
-
-      // Optional: Track which SearchMeal this came from
-      Meal.belongsTo(models.SearchMeal, {
-        foreignKey: 'searchMealId',
-        as: 'originalSearchMeal',
-        constraints: false
-      });
     }
 
     getTotalTime() {
@@ -124,28 +117,20 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
-    source: {
-      type: DataTypes.STRING,
+    visibility: {
+      type: DataTypes.ENUM('public', 'private'),
       allowNull: false,
-      defaultValue: 'local',
+      defaultValue: 'private',
       validate: {
         isIn: {
-          args: [['global', 'local']],
-          msg: 'Source must be global or local'
+          args: [['public', 'private']],
+          msg: 'Visibility must be public or private'
         }
       }
     },
     cuisineType: {
       type: DataTypes.STRING,
       allowNull: true
-    },
-    searchMealId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'SearchMeals',
-        key: 'id'
-      }
     },
     userId: {
       type: DataTypes.INTEGER,
