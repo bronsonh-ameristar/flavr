@@ -77,6 +77,38 @@ const MealDetailModal = ({ meal, onClose, onEdit }) => {
             </div>
           )}
 
+          {(meal.calories || meal.protein || meal.carbs || meal.fat) && (
+            <div className="nutrition-section">
+              <h2>Nutrition (per serving)</h2>
+              <div className="nutrition-grid">
+                {meal.calories && (
+                  <div className="nutrition-item">
+                    <span className="nutrition-value">{meal.calories}</span>
+                    <span className="nutrition-label">Calories</span>
+                  </div>
+                )}
+                {meal.protein && (
+                  <div className="nutrition-item">
+                    <span className="nutrition-value">{meal.protein}g</span>
+                    <span className="nutrition-label">Protein</span>
+                  </div>
+                )}
+                {meal.carbs && (
+                  <div className="nutrition-item">
+                    <span className="nutrition-value">{meal.carbs}g</span>
+                    <span className="nutrition-label">Carbs</span>
+                  </div>
+                )}
+                {meal.fat && (
+                  <div className="nutrition-item">
+                    <span className="nutrition-value">{meal.fat}g</span>
+                    <span className="nutrition-label">Fat</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {meal.ingredients && meal.ingredients.length > 0 && (
             <div className="ingredients-section">
               <h2>Ingredients</h2>

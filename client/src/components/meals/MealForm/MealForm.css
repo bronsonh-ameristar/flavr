@@ -226,6 +226,17 @@
   font-family: inherit;
 }
 
+/* Nutrition row - displays all 4 fields in a row */
+.nutrition-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.nutrition-row input {
+  text-align: center;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -295,6 +306,10 @@
   
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  .nutrition-row {
+    grid-template-columns: repeat(2, 1fr);
   }
   
   .ingredient-row {

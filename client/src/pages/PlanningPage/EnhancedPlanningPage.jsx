@@ -1,16 +1,20 @@
 // client/src/pages/PlanningPage/EnhancedPlanningPage.jsx
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, ShoppingCart, RotateCcw, FileText, Copy, Save } from 'lucide-react';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { useMealPlanning } from '../../hooks/useMealPlanning';
 import { useMeals } from '../../hooks/useMeals';
 import { useViewMeals } from '../../hooks/useViewMeals';
+import { useMealPlanTemplates } from '../../hooks/useMealPlanTemplates';
 import PlanningCalendar from '../../components/planning/PlanningCalendar/PlanningCalendar';
 import StatsPanel from '../../components/planning/StatsPanel/StatsPanel';
 import AddMealModal from '../../components/planning/AddMealModal/AddMealModal';
 import OccupiedSlotModal from '../../components/planning/OccupiedSlotModal/OccupiedSlotModal';
 import MealDetailModal from '../../components/meals/MealDetailModal/MealDetailModal';
 import MealForm from '../../components/meals/MealForm/MealForm';
+import RecurringMealsModal from '../../components/planning/RecurringMealsModal/RecurringMealsModal';
+import TemplatesModal from '../../components/planning/TemplatesModal/TemplatesModal';
+import SaveTemplateModal from '../../components/planning/SaveTemplateModal/SaveTemplateModal';
 import './EnhancedPlanningPage.css';
 
 const EnhancedPlanningPage = () => {
@@ -32,6 +36,10 @@ const EnhancedPlanningPage = () => {
   const [editingMeal, setEditingMeal] = useState(null);
   const [viewingMeal, setViewingMeal] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // New modal states for recurring meals and templates
+  const [showRecurringMealsModal, setShowRecurringMealsModal] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -90,6 +98,8 @@ const EnhancedPlanningPage = () => {
     fetchMealPlans,
     fetchStats
   } = useMealPlanning(startDateStr, endDateStr);
+
+  const { copyWeek } = useMealPlanTemplates();
 
   // Use the new hook for meal viewing/editing
   const {
@@ -242,6 +252,30 @@ const EnhancedPlanningPage = () => {
     handleEditClick(meal);
   };
 
+  // Copy previous week's meal plan to current week
+  const handleCopyPreviousWeek = async () => {
+    const previousWeekStart = new Date(weekStart);
+    previousWeekStart.setDate(previousWeekStart.getDate() - 7);
+    const sourceStartDate = previousWeekStart.toISOString().split('T')[0];
+    const targetStartDate = weekStart.toISOString().split('T')[0];
+
+    if (window.confirm('Copy meals from the previous week to this week? Existing meals will not be overwritten.')) {
+      try {
+        const result = await copyWeek(sourceStartDate, targetStartDate, false);
+        alert(result.message);
+        fetchMealPlans();
+      } catch (err) {
+        alert('Failed to copy week: ' + err.message);
+      }
+    }
+  };
+
+  // Callback when recurring meals or templates are applied
+  const handlePlanningApplied = () => {
+    fetchMealPlans();
+    fetchStats();
+  };
+
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="enhanced-planning-page">
@@ -275,7 +309,36 @@ const EnhancedPlanningPage = () => {
               }}
             >
               <Plus size={16} />
-              Quick Add Meal
+              Quick Add
+            </button>
+            <button
+              className="btn-icon"
+              onClick={() => setShowRecurringMealsModal(true)}
+              title="Recurring Meals"
+            >
+              <RotateCcw size={18} />
+            </button>
+            <button
+              className="btn-icon"
+              onClick={() => setShowTemplatesModal(true)}
+              title="Templates"
+            >
+              <FileText size={18} />
+            </button>
+            <button
+              className="btn-icon"
+              onClick={handleCopyPreviousWeek}
+              title="Copy Previous Week"
+            >
+              <Copy size={18} />
+            </button>
+            <button
+              className="btn-icon"
+              onClick={() => setShowSaveTemplateModal(true)}
+              title="Save as Template"
+              disabled={Object.keys(mealPlans).length === 0}
+            >
+              <Save size={18} />
             </button>
             <button
               className="btn-primary"
@@ -283,7 +346,7 @@ const EnhancedPlanningPage = () => {
               disabled={Object.keys(mealPlans).length === 0}
             >
               <ShoppingCart size={16} />
-              Generate Grocery List
+              Grocery List
             </button>
           </div>
 
@@ -368,6 +431,32 @@ const EnhancedPlanningPage = () => {
                 setViewingMeal(null);
                 handleEditMeal(meal);
               }}
+            />
+          )}
+
+          {showRecurringMealsModal && (
+            <RecurringMealsModal
+              onClose={() => setShowRecurringMealsModal(false)}
+              meals={meals}
+              weekStart={weekStart}
+              onApplied={handlePlanningApplied}
+            />
+          )}
+
+          {showTemplatesModal && (
+            <TemplatesModal
+              onClose={() => setShowTemplatesModal(false)}
+              weekStart={weekStart}
+              onApplied={handlePlanningApplied}
+            />
+          )}
+
+          {showSaveTemplateModal && (
+            <SaveTemplateModal
+              onClose={() => setShowSaveTemplateModal(false)}
+              weekStart={weekStart}
+              mealPlans={mealPlans}
+              onSaved={handlePlanningApplied}
             />
           )}
         </div>

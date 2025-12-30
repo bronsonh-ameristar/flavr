@@ -4,6 +4,8 @@ const mealsRoutes = require('./meals');
 const mealPlansRoutes = require('./mealPlans');
 const authRoutes = require('./auth');
 const groceryItemsRoutes = require('./groceryItems');
+const recurringMealsRoutes = require('./recurringMeals');
+const mealPlanTemplatesRoutes = require('./mealPlanTemplates');
 const router = express.Router();
 
 // Health check
@@ -16,5 +18,7 @@ router.use('/auth', authRoutes);
 router.use('/meals', mealsRoutes);
 router.use('/meal-plans', mealPlansRoutes);
 router.use('/grocery-items', groceryItemsRoutes);
+router.use('/recurring-meals', recurringMealsRoutes);
+router.use('/meal-plan-templates', mealPlanTemplatesRoutes);
 
 module.exports = router;

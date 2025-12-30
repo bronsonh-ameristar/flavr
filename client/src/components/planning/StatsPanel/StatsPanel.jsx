@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Users, TrendingUp, PieChart } from 'lucide-react';
+import { Clock, Users, TrendingUp, PieChart, Flame } from 'lucide-react';
 import './StatsPanel.css';
 
 const StatsPanel = ({ stats }) => {
@@ -19,7 +19,17 @@ const StatsPanel = ({ stats }) => {
     totalPrepTime = 0,
     averageServings = 0,
     categoryCounts = {},
-    difficultyCounts = {}
+    difficultyCounts = {},
+    // Nutrition stats
+    totalCalories = 0,
+    totalProtein = 0,
+    totalCarbs = 0,
+    totalFat = 0,
+    avgCalories = 0,
+    avgProtein = 0,
+    avgCarbs = 0,
+    avgFat = 0,
+    mealsWithNutrition = 0
   } = stats;
 
   const formatTime = (minutes) => {
@@ -132,6 +142,45 @@ const StatsPanel = ({ stats }) => {
           </div>
         </div>
       </div>
+
+      {mealsWithNutrition > 0 && (
+        <div className="nutrition-breakdown">
+          <h4>
+            <Flame size={16} />
+            Nutrition Summary
+          </h4>
+          <div className="nutrition-stats">
+            <div className="nutrition-stat-row">
+              <div className="nutrition-stat">
+                <span className="nutrition-stat-value">{totalCalories}</span>
+                <span className="nutrition-stat-label">Total Calories</span>
+              </div>
+              <div className="nutrition-stat">
+                <span className="nutrition-stat-value">{avgCalories}</span>
+                <span className="nutrition-stat-label">Avg/Meal</span>
+              </div>
+            </div>
+            <div className="macro-grid">
+              <div className="macro-item protein">
+                <span className="macro-value">{totalProtein}g</span>
+                <span className="macro-label">Protein</span>
+                <span className="macro-avg">~{avgProtein}g/meal</span>
+              </div>
+              <div className="macro-item carbs">
+                <span className="macro-value">{totalCarbs}g</span>
+                <span className="macro-label">Carbs</span>
+                <span className="macro-avg">~{avgCarbs}g/meal</span>
+              </div>
+              <div className="macro-item fat">
+                <span className="macro-value">{totalFat}g</span>
+                <span className="macro-label">Fat</span>
+                <span className="macro-avg">~{avgFat}g/meal</span>
+              </div>
+            </div>
+            <p className="nutrition-note">Based on {mealsWithNutrition} meal{mealsWithNutrition !== 1 ? 's' : ''} with nutrition data</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

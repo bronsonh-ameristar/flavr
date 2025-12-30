@@ -20,6 +20,18 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'userId',
         as: 'user'
       });
+
+      Meal.hasMany(models.RecurringMeal, {
+        foreignKey: 'mealId',
+        as: 'recurringMeals',
+        onDelete: 'CASCADE'
+      });
+
+      Meal.hasMany(models.MealPlanTemplateItem, {
+        foreignKey: 'mealId',
+        as: 'templateItems',
+        onDelete: 'CASCADE'
+      });
     }
 
     getTotalTime() {
@@ -141,6 +153,58 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       comment: 'If you have user authentication, track which user owns this meal'
+    },
+    calories: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Calories cannot be negative'
+        },
+        isInt: {
+          msg: 'Calories must be a whole number'
+        }
+      }
+    },
+    protein: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Protein cannot be negative'
+        },
+        isInt: {
+          msg: 'Protein must be a whole number'
+        }
+      }
+    },
+    carbs: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Carbs cannot be negative'
+        },
+        isInt: {
+          msg: 'Carbs must be a whole number'
+        }
+      }
+    },
+    fat: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Fat cannot be negative'
+        },
+        isInt: {
+          msg: 'Fat must be a whole number'
+        }
+      }
     }
   }, {
     sequelize,

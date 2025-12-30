@@ -168,22 +168,133 @@
   font-weight: 500;
 }
 
+/* Nutrition Breakdown */
+.nutrition-breakdown {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-primary);
+}
+
+.nutrition-breakdown h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nutrition-breakdown h4 svg {
+  color: #f97316;
+}
+
+.nutrition-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.nutrition-stat-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.nutrition-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+}
+
+.nutrition-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f97316;
+}
+
+.nutrition-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.macro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.macro-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0.5rem;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+}
+
+.macro-item.protein {
+  border-left: 3px solid #ef4444;
+}
+
+.macro-item.carbs {
+  border-left: 3px solid #3b82f6;
+}
+
+.macro-item.fat {
+  border-left: 3px solid #eab308;
+}
+
+.macro-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.macro-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.macro-avg {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  margin-top: 0.25rem;
+}
+
+.nutrition-note {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  margin: 0;
+  font-style: italic;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .stat-item {
     padding: 0.75rem;
   }
-  
+
   .stat-icon {
     width: 32px;
     height: 32px;
   }
-  
+
   .stat-number {
     font-size: 1.1rem;
+  }
+
+  .macro-grid {
+    grid-template-columns: 1fr;
   }
 }

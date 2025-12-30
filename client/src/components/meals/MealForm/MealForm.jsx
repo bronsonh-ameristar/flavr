@@ -15,7 +15,12 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
     cuisineType: meal?.cuisineType || '',
     instructions: meal?.instructions || '',
     imageUrl: meal?.imageUrl || '',
-    ingredients: meal?.ingredients || [{ name: '', quantity: '', unit: '', category: 'pantry' }]
+    ingredients: meal?.ingredients || [{ name: '', quantity: '', unit: '', category: 'pantry' }],
+    // Nutrition fields
+    calories: meal?.calories || '',
+    protein: meal?.protein || '',
+    carbs: meal?.carbs || '',
+    fat: meal?.fat || ''
   });
 
   const [errors, setErrors] = useState({});
@@ -113,7 +118,12 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
       ingredients: validIngredients,
       prepTime: formData.prepTime ? parseInt(formData.prepTime) : null,
       cookTime: formData.cookTime ? parseInt(formData.cookTime) : null,
-      servings: parseInt(formData.servings)
+      servings: parseInt(formData.servings),
+      // Parse nutrition fields - empty strings become null
+      calories: formData.calories !== '' ? parseInt(formData.calories) : null,
+      protein: formData.protein !== '' ? parseInt(formData.protein) : null,
+      carbs: formData.carbs !== '' ? parseInt(formData.carbs) : null,
+      fat: formData.fat !== '' ? parseInt(formData.fat) : null
     };
 
     try {
@@ -263,6 +273,59 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
                 onChange={(e) => handleInputChange('imageUrl', e.target.value)}
                 placeholder="https://example.com/image.jpg"
               />
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h3>Nutrition Information (per serving)</h3>
+            <div className="form-row nutrition-row">
+              <div className="form-group">
+                <label htmlFor="calories">Calories</label>
+                <input
+                  type="number"
+                  id="calories"
+                  value={formData.calories}
+                  onChange={(e) => handleInputChange('calories', e.target.value)}
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="protein">Protein (g)</label>
+                <input
+                  type="number"
+                  id="protein"
+                  value={formData.protein}
+                  onChange={(e) => handleInputChange('protein', e.target.value)}
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="carbs">Carbs (g)</label>
+                <input
+                  type="number"
+                  id="carbs"
+                  value={formData.carbs}
+                  onChange={(e) => handleInputChange('carbs', e.target.value)}
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="fat">Fat (g)</label>
+                <input
+                  type="number"
+                  id="fat"
+                  value={formData.fat}
+                  onChange={(e) => handleInputChange('fat', e.target.value)}
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
             </div>
           </div>
 

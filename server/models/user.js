@@ -16,6 +16,18 @@ module.exports = (sequelize, DataTypes) => {
         as: 'mealPlans',
         onDelete: 'CASCADE'
       });
+
+      User.hasMany(models.RecurringMeal, {
+        foreignKey: 'userId',
+        as: 'recurringMeals',
+        onDelete: 'CASCADE'
+      });
+
+      User.hasMany(models.MealPlanTemplate, {
+        foreignKey: 'userId',
+        as: 'mealPlanTemplates',
+        onDelete: 'CASCADE'
+      });
     }
 
     // Instance method to check password

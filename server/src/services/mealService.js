@@ -91,6 +91,20 @@ class MealService {
             mealData.servings = parseInt(mealData.servings) || 1;
         }
 
+        // Parse nutrition fields
+        if (mealData.calories !== undefined) {
+            mealData.calories = mealData.calories === '' || mealData.calories === null ? null : parseInt(mealData.calories);
+        }
+        if (mealData.protein !== undefined) {
+            mealData.protein = mealData.protein === '' || mealData.protein === null ? null : parseInt(mealData.protein);
+        }
+        if (mealData.carbs !== undefined) {
+            mealData.carbs = mealData.carbs === '' || mealData.carbs === null ? null : parseInt(mealData.carbs);
+        }
+        if (mealData.fat !== undefined) {
+            mealData.fat = mealData.fat === '' || mealData.fat === null ? null : parseInt(mealData.fat);
+        }
+
         // Ensure visibility is set to private for user-created meals
         mealData.visibility = 'private';
 
@@ -140,6 +154,20 @@ class MealService {
         }
         if (mealData.servings !== undefined) {
             mealData.servings = parseInt(mealData.servings) || 1;
+        }
+
+        // Parse nutrition fields
+        if (mealData.calories !== undefined) {
+            mealData.calories = mealData.calories === '' || mealData.calories === null ? null : parseInt(mealData.calories);
+        }
+        if (mealData.protein !== undefined) {
+            mealData.protein = mealData.protein === '' || mealData.protein === null ? null : parseInt(mealData.protein);
+        }
+        if (mealData.carbs !== undefined) {
+            mealData.carbs = mealData.carbs === '' || mealData.carbs === null ? null : parseInt(mealData.carbs);
+        }
+        if (mealData.fat !== undefined) {
+            mealData.fat = mealData.fat === '' || mealData.fat === null ? null : parseInt(mealData.fat);
         }
 
         // Don't allow changing userId

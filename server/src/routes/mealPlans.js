@@ -12,6 +12,12 @@ router.get('/grocery-list', authenticate, MealPlansController.generateGroceryLis
 // GET /api/meal-plans/stats - Get meal plan statistics
 router.get('/stats', authenticate, MealPlansController.getMealPlanStats);
 
+// POST /api/meal-plans/copy-week - Copy a week of meal plans to another week
+router.post('/copy-week', authenticate, MealPlansController.copyWeek);
+
+// POST /api/meal-plans/save-as-template - Save a week as a template
+router.post('/save-as-template', authenticate, MealPlansController.saveAsTemplate);
+
 // GET /api/meal-plans - Get meal plans for date range
 router.get('/', authenticate, MealPlansController.getMealPlans);
 

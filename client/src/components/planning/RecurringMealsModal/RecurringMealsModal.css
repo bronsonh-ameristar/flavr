@@ -1,0 +1,364 @@
+.recurring-meals-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.recurring-meals-modal {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-primary);
+}
+
+.recurring-meals-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.recurring-meals-modal .modal-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.recurring-meals-modal .modal-header h2 svg {
+  color: var(--primary-color);
+}
+
+.recurring-meals-modal .close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.recurring-meals-modal .close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.recurring-meals-modal .modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-actions-top {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.modal-actions-top .btn-primary,
+.modal-actions-top .btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.modal-actions-top .btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.modal-actions-top .btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.modal-actions-top .btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.modal-actions-top .btn-secondary:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+}
+
+.modal-actions-top .btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Add Recurring Form */
+.add-recurring-form {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.add-recurring-form h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.add-recurring-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.add-recurring-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.add-recurring-form .form-group label {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.add-recurring-form select {
+  padding: 0.75rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.meal-selector-container {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  background: var(--bg-primary);
+}
+
+.add-recurring-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.add-recurring-form .btn-cancel,
+.add-recurring-form .btn-add {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-recurring-form .btn-cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+}
+
+.add-recurring-form .btn-add {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+}
+
+.add-recurring-form .btn-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Recurring Meals List */
+.recurring-meals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.loading-text,
+.empty-text {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2rem;
+}
+
+.day-group {
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.day-header {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1rem;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.day-meals {
+  display: flex;
+  flex-direction: column;
+}
+
+.recurring-meal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-primary);
+  transition: background 0.2s ease;
+}
+
+.recurring-meal-item:last-child {
+  border-bottom: none;
+}
+
+.recurring-meal-item:hover {
+  background: var(--bg-secondary);
+}
+
+.recurring-meal-item.inactive {
+  opacity: 0.5;
+}
+
+.recurring-meal-item .meal-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.meal-type-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.meal-type-badge.breakfast {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.meal-type-badge.lunch {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.meal-type-badge.dinner {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.meal-type-badge.snack {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.meal-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.meal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-btn,
+.delete-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn {
+  color: var(--text-secondary);
+}
+
+.toggle-btn svg.active {
+  color: var(--success-color, #10b981);
+}
+
+.toggle-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.delete-btn {
+  color: var(--text-secondary);
+}
+
+.delete-btn:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Messages */
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.success-message {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .recurring-meals-modal {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .modal-actions-top {
+    flex-direction: column;
+  }
+
+  .add-recurring-form .form-row {
+    grid-template-columns: 1fr;
+  }
+}

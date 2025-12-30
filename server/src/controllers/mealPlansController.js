@@ -1,4 +1,4 @@
-const { MealPlan, Meal, Ingredient } = require('../../models');
+const { MealPlan, Meal, Ingredient, MealPlanTemplate, MealPlanTemplateItem } = require('../../models');
 const { Op } = require('sequelize');
 
 class MealPlansController {
@@ -300,7 +300,7 @@ class MealPlansController {
         include: [{
           model: Meal,
           as: 'meal',
-          attributes: ['prepTime', 'cookTime', 'servings', 'category', 'difficulty']
+          attributes: ['prepTime', 'cookTime', 'servings', 'category', 'difficulty', 'calories', 'protein', 'carbs', 'fat']
         }]
       });
 
@@ -310,7 +310,14 @@ class MealPlansController {
         totalPrepTime: 0,
         averageServings: 0,
         categoryCounts: {},
-        difficultyCounts: {}
+        difficultyCounts: {},
+        // Nutrition totals
+        totalCalories: 0,
+        totalProtein: 0,
+        totalCarbs: 0,
+        totalFat: 0,
+        // Track meals with nutrition data for accurate averages
+        mealsWithNutrition: 0
       };
 
       let totalServings = 0;
@@ -328,16 +335,209 @@ class MealPlansController {
           // Count difficulties
           const difficulty = plan.meal.difficulty || 'unknown';
           stats.difficultyCounts[difficulty] = (stats.difficultyCounts[difficulty] || 0) + 1;
+
+          // Accumulate nutrition data (only if at least one field is provided)
+          const hasNutrition = plan.meal.calories !== null || plan.meal.protein !== null ||
+                              plan.meal.carbs !== null || plan.meal.fat !== null;
+          if (hasNutrition) {
+            stats.mealsWithNutrition++;
+            stats.totalCalories += plan.meal.calories || 0;
+            stats.totalProtein += plan.meal.protein || 0;
+            stats.totalCarbs += plan.meal.carbs || 0;
+            stats.totalFat += plan.meal.fat || 0;
+          }
         }
       });
 
       stats.averageServings = stats.totalMeals > 0 ? (totalServings / stats.totalMeals).toFixed(1) : 0;
       stats.totalTime = stats.totalCookTime + stats.totalPrepTime;
 
+      // Calculate nutrition averages (only from meals that have nutrition data)
+      if (stats.mealsWithNutrition > 0) {
+        stats.avgCalories = Math.round(stats.totalCalories / stats.mealsWithNutrition);
+        stats.avgProtein = Math.round(stats.totalProtein / stats.mealsWithNutrition);
+        stats.avgCarbs = Math.round(stats.totalCarbs / stats.mealsWithNutrition);
+        stats.avgFat = Math.round(stats.totalFat / stats.mealsWithNutrition);
+      } else {
+        stats.avgCalories = 0;
+        stats.avgProtein = 0;
+        stats.avgCarbs = 0;
+        stats.avgFat = 0;
+      }
+
       res.json(stats);
     } catch (error) {
       console.error('Error fetching meal plan stats:', error);
       res.status(500).json({ error: 'Failed to fetch meal plan statistics' });
+    }
+  }
+
+  // Copy a week of meal plans to another week
+  static async copyWeek(req, res) {
+    try {
+      const userId = req.userId;
+      const { sourceStartDate, targetStartDate, overwrite = false } = req.body;
+
+      if (!sourceStartDate || !targetStartDate) {
+        return res.status(400).json({
+          error: 'sourceStartDate and targetStartDate are required'
+        });
+      }
+
+      // Calculate date ranges (7 days from start)
+      const sourceStart = new Date(sourceStartDate + 'T00:00:00');
+      const sourceEnd = new Date(sourceStart);
+      sourceEnd.setDate(sourceEnd.getDate() + 6);
+
+      const targetStart = new Date(targetStartDate + 'T00:00:00');
+
+      // Get all meal plans from source week
+      const sourcePlans = await MealPlan.findAll({
+        where: {
+          userId,
+          date: {
+            [Op.between]: [sourceStartDate, sourceEnd.toISOString().split('T')[0]]
+          }
+        }
+      });
+
+      if (sourcePlans.length === 0) {
+        return res.json({
+          message: 'No meal plans found in source week',
+          created: 0,
+          updated: 0,
+          skipped: 0
+        });
+      }
+
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
+
+      for (const plan of sourcePlans) {
+        // Calculate day offset from source start
+        const planDate = new Date(plan.date + 'T00:00:00');
+        const dayOffset = Math.round((planDate - sourceStart) / (1000 * 60 * 60 * 24));
+
+        // Calculate target date
+        const targetDate = new Date(targetStart);
+        targetDate.setDate(targetDate.getDate() + dayOffset);
+        const targetDateStr = targetDate.toISOString().split('T')[0];
+
+        // Check if meal plan already exists
+        const existing = await MealPlan.findOne({
+          where: {
+            userId,
+            date: targetDateStr,
+            mealType: plan.mealType
+          }
+        });
+
+        if (existing) {
+          if (overwrite) {
+            await existing.update({ mealId: plan.mealId });
+            updated++;
+          } else {
+            skipped++;
+          }
+        } else {
+          await MealPlan.create({
+            userId,
+            mealId: plan.mealId,
+            date: targetDateStr,
+            mealType: plan.mealType
+          });
+          created++;
+        }
+      }
+
+      res.json({
+        message: `Week copied: ${created} created, ${updated} updated, ${skipped} skipped`,
+        created,
+        updated,
+        skipped
+      });
+    } catch (error) {
+      console.error('Error copying week:', error);
+      res.status(500).json({ error: 'Failed to copy week' });
+    }
+  }
+
+  // Save a week's meal plans as a template
+  static async saveAsTemplate(req, res) {
+    try {
+      const userId = req.userId;
+      const { weekStartDate, templateName } = req.body;
+
+      if (!weekStartDate || !templateName) {
+        return res.status(400).json({
+          error: 'weekStartDate and templateName are required'
+        });
+      }
+
+      // Calculate week end date
+      const weekStart = new Date(weekStartDate + 'T00:00:00');
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      // Get all meal plans for the week
+      const mealPlans = await MealPlan.findAll({
+        where: {
+          userId,
+          date: {
+            [Op.between]: [weekStartDate, weekEnd.toISOString().split('T')[0]]
+          }
+        }
+      });
+
+      if (mealPlans.length === 0) {
+        return res.status(400).json({
+          error: 'No meal plans found for the specified week'
+        });
+      }
+
+      // Create the template
+      const template = await MealPlanTemplate.create({
+        userId,
+        name: templateName
+      });
+
+      // Create template items from meal plans
+      const itemPromises = mealPlans.map(plan => {
+        // Calculate day of week (0 = Sunday)
+        const planDate = new Date(plan.date + 'T00:00:00');
+        const dayOfWeek = planDate.getDay();
+
+        return MealPlanTemplateItem.create({
+          templateId: template.id,
+          mealId: plan.mealId,
+          dayOfWeek,
+          mealType: plan.mealType
+        });
+      });
+
+      await Promise.all(itemPromises);
+
+      // Fetch complete template with items
+      const completeTemplate = await MealPlanTemplate.findByPk(template.id, {
+        include: [{
+          model: MealPlanTemplateItem,
+          as: 'items',
+          include: [{
+            model: Meal,
+            as: 'meal',
+            attributes: ['id', 'name', 'category', 'imageUrl']
+          }]
+        }]
+      });
+
+      res.status(201).json({
+        message: `Template created with ${mealPlans.length} meal plans`,
+        template: completeTemplate
+      });
+    } catch (error) {
+      console.error('Error saving week as template:', error);
+      res.status(500).json({ error: 'Failed to save week as template' });
     }
   }
 }
