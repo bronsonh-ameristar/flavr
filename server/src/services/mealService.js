@@ -3,12 +3,17 @@ const { Op } = require('sequelize');
 
 class MealService {
     /**
-     * Get all private meals with pagination and filtering
+     * Get all private meals for a user with pagination and filtering
      */
-    static async getAllMeals({ category, cuisineType, search, limit = 50, offset = 0 }) {
+    static async getAllMeals({ category, cuisineType, search, limit = 50, offset = 0, userId }) {
         const whereClause = {
             visibility: 'private'
         };
+
+        // Filter by user ID (required for private meals)
+        if (userId) {
+            whereClause.userId = userId;
+        }
 
         if (category && category !== 'all') {
             whereClause.category = category;
@@ -45,9 +50,12 @@ class MealService {
     }
 
     /**
-     * Get a single meal by ID
+     * Get a single meal by ID (with optional user ownership check)
      */
-    static async getMealById(id) {
+    static async getMealById(id, userId = null) {
+        const whereClause = { id };
+
+        // If userId is provided, also check ownership for private meals
         const meal = await Meal.findByPk(id, {
             include: [{
                 model: Ingredient,
@@ -60,13 +68,18 @@ class MealService {
             throw new Error('Meal not found');
         }
 
+        // If it's a private meal, check ownership
+        if (meal.visibility === 'private' && userId && meal.userId !== userId) {
+            throw new Error('Meal not found');
+        }
+
         return meal;
     }
 
     /**
-     * Create a new meal
+     * Create a new meal for a user
      */
-    static async createMeal(mealData, ingredients) {
+    static async createMeal(mealData, ingredients, userId) {
         // Parse numeric fields
         if (mealData.prepTime !== undefined) {
             mealData.prepTime = parseInt(mealData.prepTime) || null;
@@ -80,6 +93,9 @@ class MealService {
 
         // Ensure visibility is set to private for user-created meals
         mealData.visibility = 'private';
+
+        // Set the user ID
+        mealData.userId = userId;
 
         // Create meal
         const meal = await Meal.create(mealData);
@@ -100,9 +116,21 @@ class MealService {
     }
 
     /**
-     * Update an existing meal
+     * Update an existing meal (with ownership check)
      */
-    static async updateMeal(id, mealData, ingredients) {
+    static async updateMeal(id, mealData, ingredients, userId) {
+        // First check if meal exists and user owns it
+        const existingMeal = await Meal.findByPk(id);
+
+        if (!existingMeal) {
+            throw new Error('Meal not found');
+        }
+
+        // Check ownership for private meals
+        if (existingMeal.visibility === 'private' && existingMeal.userId !== userId) {
+            throw new Error('Meal not found');
+        }
+
         // Parse numeric fields
         if (mealData.prepTime !== undefined) {
             mealData.prepTime = parseInt(mealData.prepTime) || null;
@@ -114,13 +142,12 @@ class MealService {
             mealData.servings = parseInt(mealData.servings) || 1;
         }
 
-        const [updatedCount] = await Meal.update(mealData, {
+        // Don't allow changing userId
+        delete mealData.userId;
+
+        await Meal.update(mealData, {
             where: { id }
         });
-
-        if (updatedCount === 0) {
-            throw new Error('Meal not found');
-        }
 
         // Update ingredients if provided
         if (ingredients && Array.isArray(ingredients)) {
@@ -143,15 +170,22 @@ class MealService {
     }
 
     /**
-     * Delete a meal
+     * Delete a meal (with ownership check)
      */
-    static async deleteMeal(id) {
-        const deletedCount = await Meal.destroy({ where: { id } });
+    static async deleteMeal(id, userId) {
+        // First check if meal exists and user owns it
+        const existingMeal = await Meal.findByPk(id);
 
-        if (deletedCount === 0) {
+        if (!existingMeal) {
             throw new Error('Meal not found');
         }
 
+        // Check ownership for private meals
+        if (existingMeal.visibility === 'private' && existingMeal.userId !== userId) {
+            throw new Error('Meal not found');
+        }
+
+        await Meal.destroy({ where: { id } });
         return true;
     }
 
@@ -269,7 +303,11 @@ class MealService {
     /**
      * Check if a public meal exists in user's private collection
      */
-    static async checkPublicMeal(publicMealId, userId = null) {
+    static async checkPublicMeal(publicMealId, userId) {
+        if (!userId) {
+            return false;
+        }
+
         // First find the public meal to get its name
         const publicMeal = await Meal.findOne({
             where: { id: publicMealId, visibility: 'public' }
@@ -279,24 +317,26 @@ class MealService {
             return false;
         }
 
-        // Check if a private meal with the same name exists
-        const whereClause = {
-            name: publicMeal.name,
-            visibility: 'private'
-        };
+        // Check if a private meal with the same name exists for this user
+        const existingMeal = await Meal.findOne({
+            where: {
+                name: publicMeal.name,
+                visibility: 'private',
+                userId: userId
+            }
+        });
 
-        if (userId) {
-            whereClause.userId = userId;
-        }
-
-        const existingMeal = await Meal.findOne({ where: whereClause });
         return !!existingMeal;
     }
 
     /**
      * Add a public meal to user's private collection
      */
-    static async addPublicMeal(publicMealId, userId = null) {
+    static async addPublicMeal(publicMealId, userId) {
+        if (!userId) {
+            throw new Error('User ID is required');
+        }
+
         // Find the public meal with its ingredients
         const publicMeal = await Meal.findOne({
             where: { id: publicMealId, visibility: 'public' },
@@ -310,17 +350,14 @@ class MealService {
             throw new Error('Public meal not found');
         }
 
-        // Check if meal already exists in private collection
-        const whereClause = {
-            name: publicMeal.name,
-            visibility: 'private'
-        };
-
-        if (userId) {
-            whereClause.userId = userId;
-        }
-
-        const existingMeal = await Meal.findOne({ where: whereClause });
+        // Check if meal already exists in user's private collection
+        const existingMeal = await Meal.findOne({
+            where: {
+                name: publicMeal.name,
+                visibility: 'private',
+                userId: userId
+            }
+        });
 
         if (existingMeal) {
             const error = new Error('Meal already exists in your collection');

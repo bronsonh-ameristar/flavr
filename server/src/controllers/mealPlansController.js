@@ -2,23 +2,31 @@ const { MealPlan, Meal, Ingredient } = require('../../models');
 const { Op } = require('sequelize');
 
 class MealPlansController {
-  // Get meal plans for a date range (typically a week)
+  // Get meal plans for a date range (typically a week) - filtered by user
   static async getMealPlans(req, res) {
     try {
       const { startDate, endDate } = req.query;
-      
+      const userId = req.userId;
+
       if (!startDate || !endDate) {
-        return res.status(400).json({ 
-          error: 'Start date and end date are required' 
+        return res.status(400).json({
+          error: 'Start date and end date are required'
         });
       }
 
+      const whereClause = {
+        date: {
+          [Op.between]: [startDate, endDate]
+        }
+      };
+
+      // Filter by user if authenticated
+      if (userId) {
+        whereClause.userId = userId;
+      }
+
       const mealPlans = await MealPlan.findAll({
-        where: {
-          date: {
-            [Op.between]: [startDate, endDate]
-          }
-        },
+        where: whereClause,
         include: [{
           model: Meal,
           as: 'meal',
@@ -49,10 +57,11 @@ class MealPlansController {
     }
   }
 
-  // Add meal to meal plan
+  // Add meal to meal plan - assigned to current user
   static async addMealToPlan(req, res) {
     try {
       const { date, mealType, mealId } = req.body;
+      const userId = req.userId;
 
       if (!date || !mealType || !mealId) {
         return res.status(400).json({
@@ -60,20 +69,43 @@ class MealPlansController {
         });
       }
 
-      // Check if meal exists
+      // Check if meal exists and user has access to it
       const meal = await Meal.findByPk(mealId);
       if (!meal) {
         return res.status(404).json({ error: 'Meal not found' });
       }
 
-      // Create or update meal plan
-      const [mealPlan, created] = await MealPlan.upsert({
-        date,
-        mealType,
-        mealId
-      }, {
-        returning: true
+      // Only allow adding public meals or user's own private meals
+      if (meal.visibility === 'private' && meal.userId !== userId) {
+        return res.status(404).json({ error: 'Meal not found' });
+      }
+
+      // Check if a meal plan already exists for this date/mealType/user
+      const existingPlan = await MealPlan.findOne({
+        where: {
+          date,
+          mealType,
+          userId
+        }
       });
+
+      let mealPlan;
+      let created = false;
+
+      if (existingPlan) {
+        // Update existing plan
+        await existingPlan.update({ mealId });
+        mealPlan = existingPlan;
+      } else {
+        // Create new plan
+        mealPlan = await MealPlan.create({
+          date,
+          mealType,
+          mealId,
+          userId
+        });
+        created = true;
+      }
 
       // Fetch the complete meal plan with meal details
       const completeMealPlan = await MealPlan.findByPk(mealPlan.id, {
@@ -90,25 +122,31 @@ class MealPlansController {
       });
     } catch (error) {
       console.error('Error adding meal to plan:', error);
-      
+
       if (error.name === 'SequelizeValidationError') {
         return res.status(400).json({
           error: 'Validation failed',
           details: error.errors.map(e => e.message)
         });
       }
-      
+
       res.status(500).json({ error: 'Failed to add meal to plan' });
     }
   }
 
-  // Remove meal from meal plan
+  // Remove meal from meal plan - only for current user
   static async removeMealFromPlan(req, res) {
     try {
       const { date, mealType } = req.params;
+      const userId = req.userId;
+
+      const whereClause = { date, mealType };
+      if (userId) {
+        whereClause.userId = userId;
+      }
 
       const deletedCount = await MealPlan.destroy({
-        where: { date, mealType }
+        where: whereClause
       });
 
       if (deletedCount === 0) {
@@ -122,23 +160,30 @@ class MealPlansController {
     }
   }
 
-  // Generate grocery list
+  // Generate grocery list - filtered by user
   static async generateGroceryList(req, res) {
     try {
       const { startDate, endDate } = req.query;
-      
+      const userId = req.userId;
+
       if (!startDate || !endDate) {
-        return res.status(400).json({ 
-          error: 'Start date and end date are required' 
+        return res.status(400).json({
+          error: 'Start date and end date are required'
         });
       }
 
+      const whereClause = {
+        date: {
+          [Op.between]: [startDate, endDate]
+        }
+      };
+
+      if (userId) {
+        whereClause.userId = userId;
+      }
+
       const mealPlans = await MealPlan.findAll({
-        where: {
-          date: {
-            [Op.between]: [startDate, endDate]
-          }
-        },
+        where: whereClause,
         include: [{
           model: Meal,
           as: 'meal',
@@ -156,16 +201,16 @@ class MealPlansController {
         if (plan.meal && plan.meal.ingredients) {
           plan.meal.ingredients.forEach(ingredient => {
             const key = `${ingredient.name}-${ingredient.unit || 'unit'}`;
-            
+
             if (consolidatedIngredients[key]) {
               const existingQty = parseFloat(consolidatedIngredients[key].quantity) || 0;
               const newQty = parseFloat(ingredient.quantity) || 0;
               consolidatedIngredients[key].quantity = (existingQty + newQty).toString();
-              
+
               if (!consolidatedIngredients[key].usedInMeals.includes(plan.meal.name)) {
                 consolidatedIngredients[key].usedInMeals.push(plan.meal.name);
               }
-              
+
               // Keep the first non-null store
               if (!consolidatedIngredients[key].store && ingredient.store) {
                 consolidatedIngredients[key].store = ingredient.store;
@@ -191,12 +236,12 @@ class MealPlansController {
         if (!groceryList[store]) {
           groceryList[store] = {};
         }
-        
+
         const category = ingredient.category || 'other';
         if (!groceryList[store][category]) {
           groceryList[store][category] = [];
         }
-        
+
         groceryList[store][category].push(ingredient);
       });
 
@@ -211,23 +256,30 @@ class MealPlansController {
     }
   }
 
-  // Get meal plan statistics
+  // Get meal plan statistics - filtered by user
   static async getMealPlanStats(req, res) {
     try {
       const { startDate, endDate } = req.query;
-      
+      const userId = req.userId;
+
       if (!startDate || !endDate) {
-        return res.status(400).json({ 
-          error: 'Start date and end date are required' 
+        return res.status(400).json({
+          error: 'Start date and end date are required'
         });
       }
 
+      const whereClause = {
+        date: {
+          [Op.between]: [startDate, endDate]
+        }
+      };
+
+      if (userId) {
+        whereClause.userId = userId;
+      }
+
       const mealPlans = await MealPlan.findAll({
-        where: {
-          date: {
-            [Op.between]: [startDate, endDate]
-          }
-        },
+        where: whereClause,
         include: [{
           model: Meal,
           as: 'meal',

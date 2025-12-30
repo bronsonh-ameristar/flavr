@@ -15,6 +15,11 @@ module.exports = (sequelize, DataTypes) => {
         as: 'mealPlans',
         onDelete: 'CASCADE'
       });
+
+      Meal.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user'
+      });
     }
 
     getTotalTime() {

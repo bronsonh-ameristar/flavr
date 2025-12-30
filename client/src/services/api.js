@@ -12,9 +12,13 @@ const api = axios.create({
   },
 });
 
-// Request interceptor for logging
+// Request interceptor - add auth token
 api.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     console.log('API Request:', config.method?.toUpperCase(), config.url);
     return config;
   },
@@ -32,14 +36,21 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('API Response Error:', error.response?.status, error.response?.data);
-    
-    // Handle common errors
-    if (error.response?.status === 404) {
+
+    // Handle 401 errors - clear token and redirect to login
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      // Only redirect if not already on auth pages
+      if (!window.location.pathname.startsWith('/login') &&
+          !window.location.pathname.startsWith('/register')) {
+        window.location.href = '/login';
+      }
+    } else if (error.response?.status === 404) {
       console.error('Resource not found');
     } else if (error.response?.status >= 500) {
       console.error('Server error occurred');
     }
-    
+
     return Promise.reject(error);
   }
 );

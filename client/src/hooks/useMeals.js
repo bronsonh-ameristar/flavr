@@ -1,7 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import api from '../services/api';
 
 export const useMeals = () => {
   const [meals, setMeals] = useState([]);  // Initialize as empty array
@@ -27,7 +25,7 @@ export const useMeals = () => {
       if (cuisineType && cuisineType !== 'all') params.cuisineType = cuisineType;
       if (search) params.search = search;
 
-      const response = await axios.get(`${API_URL}/meals`, { params });
+      const response = await api.get('/meals', { params });
 
       // Handle response - backend now returns response.data.data
       const mealsData = response.data?.data || [];
@@ -53,7 +51,7 @@ export const useMeals = () => {
   // Get a single meal by ID
   const getMealById = useCallback(async (mealId) => {
     try {
-      const response = await axios.get(`${API_URL}/meals/${mealId}`);
+      const response = await api.get(`/meals/${mealId}`);
       return response.data?.data || response.data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to fetch meal';
@@ -66,7 +64,7 @@ export const useMeals = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post(`${API_URL}/meals`, mealData);
+      const response = await api.post('/meals', mealData);
       const newMeal = response.data?.data || response.data;
 
       // Add to local state
@@ -88,7 +86,7 @@ export const useMeals = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.put(`${API_URL}/meals/${mealId}`, mealData);
+      const response = await api.put(`/meals/${mealId}`, mealData);
       const updatedMeal = response.data?.data || response.data;
 
       // Update in local state
@@ -111,7 +109,7 @@ export const useMeals = () => {
     setLoading(true);
     setError(null);
     try {
-      await axios.delete(`${API_URL}/meals/${mealId}`);
+      await api.delete(`/meals/${mealId}`);
 
       // Remove from local state
       setMeals(prev => prev.filter(meal => meal.id !== mealId));

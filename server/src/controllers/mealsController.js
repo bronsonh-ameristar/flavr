@@ -1,10 +1,13 @@
 const MealService = require('../services/mealService');
 
 class MealsController {
-  // Get all private meals with ingredients
+  // Get all private meals with ingredients (filtered by user)
   static async getAllMeals(req, res) {
     try {
-      const result = await MealService.getAllMeals(req.query);
+      const result = await MealService.getAllMeals({
+        ...req.query,
+        userId: req.userId
+      });
 
       res.json({
         ...result,
@@ -20,10 +23,10 @@ class MealsController {
     }
   }
 
-  // Get single meal with ingredients
+  // Get single meal with ingredients (with ownership check)
   static async getMealById(req, res) {
     try {
-      const meal = await MealService.getMealById(req.params.id);
+      const meal = await MealService.getMealById(req.params.id, req.userId);
 
       res.json({
         data: meal,
@@ -47,11 +50,11 @@ class MealsController {
     }
   }
 
-  // Create new meal with ingredients
+  // Create new meal with ingredients (assigned to current user)
   static async createMeal(req, res) {
     try {
       const { ingredients, ...mealData } = req.body;
-      const meal = await MealService.createMeal(mealData, ingredients);
+      const meal = await MealService.createMeal(mealData, ingredients, req.userId);
 
       res.status(201).json({
         data: meal,
@@ -76,11 +79,11 @@ class MealsController {
     }
   }
 
-  // Update meal
+  // Update meal (with ownership check)
   static async updateMeal(req, res) {
     try {
       const { ingredients, ...mealData } = req.body;
-      const meal = await MealService.updateMeal(req.params.id, mealData, ingredients);
+      const meal = await MealService.updateMeal(req.params.id, mealData, ingredients, req.userId);
 
       res.json({
         data: meal,
@@ -112,10 +115,10 @@ class MealsController {
     }
   }
 
-  // Delete meal
+  // Delete meal (with ownership check)
   static async deleteMeal(req, res) {
     try {
-      await MealService.deleteMeal(req.params.id);
+      await MealService.deleteMeal(req.params.id, req.userId);
       res.status(204).send();
     } catch (error) {
       console.error('Error deleting meal:', error);
@@ -225,7 +228,7 @@ class MealsController {
   // Check if public meal is already in user's private collection
   static async checkPublicMeal(req, res) {
     try {
-      const hasMeal = await MealService.checkPublicMeal(req.params.id);
+      const hasMeal = await MealService.checkPublicMeal(req.params.id, req.userId);
       return res.status(200).json({
         hasMeal,
         success: true
@@ -243,7 +246,7 @@ class MealsController {
   // Add public meal to user's private collection
   static async addPublicMeal(req, res) {
     try {
-      const meal = await MealService.addPublicMeal(req.params.id);
+      const meal = await MealService.addPublicMeal(req.params.id, req.userId);
 
       res.status(201).json({
         message: 'Meal successfully added to your collection',

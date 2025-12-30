@@ -9,6 +9,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'mealId',
         as: 'meal'
       });
+
+      // MealPlan belongs to User
+      MealPlan.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user'
+      });
     }
 
     // Helper method to format date for frontend
@@ -56,6 +62,10 @@ module.exports = (sequelize, DataTypes) => {
           msg: 'Meal ID is required'
         }
       }
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     }
   }, {
     sequelize,

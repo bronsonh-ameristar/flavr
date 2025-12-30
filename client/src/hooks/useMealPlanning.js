@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import MealPlanningService from '../services/mealPlanningService';
 
 export const useMealPlanning = (startDate, endDate) => {
@@ -68,7 +68,7 @@ export const useMealPlanning = (startDate, endDate) => {
   // Generate grocery list
   const generateGroceryList = useCallback(async () => {
     if (!startDate || !endDate) return;
-    
+
     try {
       setError(null);
       const data = await MealPlanningService.generateGroceryList(startDate, endDate);
@@ -76,7 +76,7 @@ export const useMealPlanning = (startDate, endDate) => {
       return data;
     } catch (error) {
       setError(error.message);
-      throw error;
+      // Don't re-throw - let the hook handle errors via state
     }
   }, [startDate, endDate]);
 
@@ -92,17 +92,8 @@ export const useMealPlanning = (startDate, endDate) => {
     }
   }, [startDate, endDate]);
 
-  // Load initial data
-  useEffect(() => {
-    fetchMealPlans();
-  }, [fetchMealPlans]);
-
-  // Fetch stats when meal plans change
-  useEffect(() => {
-    if (Object.keys(mealPlans).length > 0) {
-      fetchStats();
-    }
-  }, [mealPlans, fetchStats]);
+  // Note: Auto-fetch removed - components should call fetchMealPlans explicitly
+  // This prevents 401 errors when hook is mounted before auth is verified
 
   return {
     mealPlans,

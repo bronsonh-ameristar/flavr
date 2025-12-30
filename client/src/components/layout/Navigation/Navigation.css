@@ -109,12 +109,98 @@
   .brand-text {
     display: none;
   }
-  
+
   .nav-links {
     gap: 0.25rem;
   }
-  
+
   .nav-link {
     padding: 0.5rem;
+  }
+}
+
+/* User menu and auth styles */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-greeting {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.user-greeting svg {
+  color: var(--primary-color);
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  color: var(--error-color, #ef4444);
+  border-color: var(--error-color, #ef4444);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.login-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.login-button:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .user-greeting .user-name {
+    display: none;
+  }
+
+  .logout-button span,
+  .login-button span {
+    display: none;
+  }
+
+  .logout-button,
+  .login-button {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-greeting {
+    display: none;
   }
 }
