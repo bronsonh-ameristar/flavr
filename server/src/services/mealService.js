@@ -402,6 +402,34 @@ class MealService {
         // Fetch the complete meal with ingredients
         return await this.getMealById(newMeal.id);
     }
+
+    /**
+     * Update ingredient store assignment
+     */
+    static async updateIngredientStore(ingredientId, store, userId) {
+        // Find the ingredient
+        const ingredient = await Ingredient.findByPk(ingredientId, {
+            include: [{
+                model: Meal,
+                as: 'meal',
+                attributes: ['id', 'userId', 'visibility']
+            }]
+        });
+
+        if (!ingredient) {
+            throw new Error('Ingredient not found');
+        }
+
+        // Verify ownership - user must own the meal this ingredient belongs to
+        if (ingredient.meal.visibility === 'private' && ingredient.meal.userId !== userId) {
+            throw new Error('Not authorized');
+        }
+
+        // Update the store
+        await ingredient.update({ store });
+
+        return ingredient;
+    }
 }
 
 module.exports = MealService;

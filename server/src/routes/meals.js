@@ -24,6 +24,10 @@ router.post('/public/:id/add', authenticate, MealsController.addPublicMeal);
 // GET /api/meals/public/:id - Get single public meal with ingredients
 router.get('/public/:id', optionalAuth, MealsController.getPublicMealById);
 
+// INGREDIENT ROUTES (must come before parameterized meal routes)
+// PATCH /api/meals/ingredients/:ingredientId/store - Update ingredient store
+router.patch('/ingredients/:ingredientId/store', authenticate, MealsController.updateIngredientStore);
+
 // PRIVATE MEAL ROUTES (user's personal collection - all require authentication)
 // GET /api/meals - Get all private meals with optional filtering
 router.get('/', authenticate, MealsController.getAllMeals);

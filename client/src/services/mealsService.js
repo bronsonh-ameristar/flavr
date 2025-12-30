@@ -82,11 +82,28 @@ class MealsService {
       const params = {};
       if (searchTerm) params.search = searchTerm;
       if (category !== 'all') params.category = category;
-      
+
       return await this.getAllMeals(params);
     } catch (error) {
       console.error('Error searching meals:', error);
       throw new Error('Failed to search meals');
+    }
+  }
+
+  // Update ingredient store assignment
+  static async updateIngredientStore(ingredientId, store) {
+    try {
+      const response = await api.patch(`/meals/ingredients/${ingredientId}/store`, { store });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating ingredient store:', error);
+      if (error.response?.status === 404) {
+        throw new Error('Ingredient not found');
+      }
+      if (error.response?.status === 403) {
+        throw new Error('Not authorized to update this ingredient');
+      }
+      throw new Error('Failed to update ingredient store');
     }
   }
 }

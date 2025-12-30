@@ -105,6 +105,7 @@ export const useMealPlanning = (startDate, endDate) => {
     removeMealFromPlan,
     generateGroceryList,
     fetchMealPlans,
+    fetchStats,
     refetch: fetchMealPlans
   };
 };

@@ -287,6 +287,44 @@ class MealsController {
       });
     }
   }
+
+  // Update ingredient store assignment
+  static async updateIngredientStore(req, res) {
+    try {
+      const { ingredientId } = req.params;
+      const { store } = req.body;
+      const userId = req.userId;
+
+      if (!store) {
+        return res.status(400).json({
+          error: 'Store name is required',
+          success: false
+        });
+      }
+
+      const ingredient = await MealService.updateIngredientStore(ingredientId, store, userId);
+
+      res.json({
+        data: ingredient,
+        success: true
+      });
+    } catch (error) {
+      console.error('Error updating ingredient store:', error);
+
+      if (error.message === 'Ingredient not found' || error.message === 'Not authorized') {
+        return res.status(404).json({
+          error: error.message,
+          success: false
+        });
+      }
+
+      res.status(500).json({
+        error: 'Failed to update ingredient store',
+        message: error.message,
+        success: false
+      });
+    }
+  }
 }
 
 module.exports = MealsController;

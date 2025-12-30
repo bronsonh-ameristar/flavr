@@ -130,7 +130,18 @@ class MealPlansController {
         });
       }
 
-      res.status(500).json({ error: 'Failed to add meal to plan' });
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        return res.status(409).json({
+          error: 'Meal plan already exists',
+          message: 'A meal is already planned for this date and meal type'
+        });
+      }
+
+      res.status(500).json({
+        error: 'Failed to add meal to plan',
+        message: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
     }
   }
 
@@ -211,6 +222,11 @@ class MealPlansController {
                 consolidatedIngredients[key].usedInMeals.push(plan.meal.name);
               }
 
+              // Track all ingredient IDs for this consolidated item
+              if (!consolidatedIngredients[key].ingredientIds.includes(ingredient.id)) {
+                consolidatedIngredients[key].ingredientIds.push(ingredient.id);
+              }
+
               // Keep the first non-null store
               if (!consolidatedIngredients[key].store && ingredient.store) {
                 consolidatedIngredients[key].store = ingredient.store;
@@ -222,7 +238,8 @@ class MealPlansController {
                 unit: ingredient.unit,
                 category: ingredient.category,
                 store: ingredient.store || 'Unassigned',
-                usedInMeals: [plan.meal.name]
+                usedInMeals: [plan.meal.name],
+                ingredientIds: [ingredient.id]
               };
             }
           });

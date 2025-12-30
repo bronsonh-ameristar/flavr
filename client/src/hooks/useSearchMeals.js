@@ -1,7 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import api from '../services/api';
 
 export const useSearchMeals = () => {
   const [searchMeals, setSearchMeals] = useState([]);  // Initialize as empty array
@@ -14,7 +12,7 @@ export const useSearchMeals = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_URL}/meals/public/top`, {
+      const response = await api.get('/meals/public/top', {
         params: { limit }
       });
 
@@ -61,7 +59,7 @@ export const useSearchMeals = () => {
       if (maxPrepTime) params.maxPrepTime = maxPrepTime;
       if (maxCookTime) params.maxCookTime = maxCookTime;
 
-      const response = await axios.get(`${API_URL}/meals/public/search`, {
+      const response = await api.get('/meals/public/search', {
         params
       });
 
@@ -88,7 +86,7 @@ export const useSearchMeals = () => {
   // Add a public meal to user's personal collection
   const addMealToPersonal = useCallback(async (mealId) => {
     try {
-      const response = await axios.post(`${API_URL}/meals/public/${mealId}/add`);
+      const response = await api.post(`/meals/public/${mealId}/add`);
       return response.data?.meal || response.data?.data || response.data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to add meal to personal list';
@@ -99,7 +97,7 @@ export const useSearchMeals = () => {
   // Check if a public meal is already in user's personal collection
   const checkMealInPersonal = useCallback(async (mealId) => {
     try {
-      const response = await axios.get(`${API_URL}/meals/public/${mealId}/check`);
+      const response = await api.get(`/meals/public/${mealId}/check`);
       return response.data?.hasMeal || false;
     } catch (err) {
       console.error('Error checking meal:', err);
@@ -110,7 +108,7 @@ export const useSearchMeals = () => {
   // Get a single public meal by ID
   const getSearchMealById = useCallback(async (mealId) => {
     try {
-      const response = await axios.get(`${API_URL}/meals/public/${mealId}`);
+      const response = await api.get(`/meals/public/${mealId}`);
       return response.data?.data || response.data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to fetch meal details';

@@ -1,22 +1,37 @@
 // client/src/components/planning/AddMealModal.jsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { X, Plus } from 'lucide-react';
 import './AddMealModal.css';
 import MealSelector from '../../planning/MealSelector/MealSelector';
 
-const AddMealModal = ({ onClose, selected, onSave, meals = [] }) => {
-  const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = null }) => {
+  const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 
+  // Determine initial day from selectedSlot if provided
+  const initialDay = useMemo(() => {
+    if (selectedSlot?.date) {
+      const date = new Date(selectedSlot.date + 'T00:00:00');
+      return DAYS_OF_WEEK[date.getDay()];
+    }
+    return null;
+  }, [selectedSlot]);
+
+  // Determine initial meal type from selectedSlot if provided
+  const initialMealType = selectedSlot?.mealType || 'dinner';
+
   const [selectedMeal, setSelectedMeal] = useState(null);
-  const [selectedDays, setSelectedDays] = useState(selected ? [selected] : []);
+  const [selectedDays, setSelectedDays] = useState(initialDay ? [initialDay] : (selected ? [selected] : []));
   const [frequency, setFrequency] = useState('once');
-  const [mealType, setMealType] = useState('dinner');
+  const [mealType, setMealType] = useState(initialMealType);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState('');
+
+  // Flag to indicate if we're in "specific slot" mode
+  const isSpecificSlot = !!selectedSlot;
 
   const handleDayToggle = (day) => {
     setSelectedDays(prev => 
@@ -74,107 +89,134 @@ const AddMealModal = ({ onClose, selected, onSave, meals = [] }) => {
     }
   };
 
+  // Format date for display
+  const formatSlotDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  };
+
   return (
     <div className='add-meal-overlay' onClick={onClose}>
       <div className='add-meal-modal' onClick={(e) => e.stopPropagation()}>
         <div className='modal-header'>
-          <h2>Add Meal to Schedule</h2>
+          <h2>
+            {isSpecificSlot
+              ? `Add ${mealType.charAt(0).toUpperCase() + mealType.slice(1)} for ${formatSlotDate(selectedSlot.date)}`
+              : 'Add Meal to Schedule'
+            }
+          </h2>
           <button onClick={onClose} className="close-btn">
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className='add-meal-form'>
-          {/* Meal Type Selection */}
-          <div className='form-section'>
-            <label className='section-label'>Meal Type</label>
-            <div className='meal-type-grid'>
-              {MEAL_TYPES.map(type => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setMealType(type)}
-                  className={`meal-type-btn ${mealType === type ? 'active' : ''}`}
-                >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </button>
-              ))}
+          {/* Meal Type Selection - show as info when specific slot, otherwise allow selection */}
+          {isSpecificSlot ? (
+            <div className='form-section'>
+              <div className='slot-info'>
+                <span className='slot-info-label'>Adding to:</span>
+                <span className='slot-info-value'>
+                  {mealType.charAt(0).toUpperCase() + mealType.slice(1)} on {formatSlotDate(selectedSlot.date)}
+                </span>
+              </div>
             </div>
-          </div>
-
-          {/* Frequency Selection */}
-          <div className='form-section'>
-            <label className='section-label'>Frequency</label>
-            <div className='frequency-options'>
-              <label className='radio-option'>
-                <input
-                  type="radio"
-                  name="frequency"
-                  value="once"
-                  checked={frequency === 'once'}
-                  onChange={(e) => handleFrequencyChange(e.target.value)}
-                />
-                <div className='radio-content'>
-                  <span className='radio-title'>One-Time</span>
-                  <span className='radio-description'>Add to specific dates only</span>
-                </div>
-              </label>
-
-              <label className='radio-option'>
-                <input
-                  type="radio"
-                  name="frequency"
-                  value="weekly"
-                  checked={frequency === 'weekly'}
-                  onChange={(e) => handleFrequencyChange(e.target.value)}
-                />
-                <div className='radio-content'>
-                  <span className='radio-title'>Weekly Recurring</span>
-                  <span className='radio-description'>Repeat every week</span>
-                </div>
-              </label>
-
-              <label className='radio-option'>
-                <input
-                  type="radio"
-                  name="frequency"
-                  value="custom"
-                  checked={frequency === 'custom'}
-                  onChange={(e) => handleFrequencyChange(e.target.value)}
-                />
-                <div className='radio-content'>
-                  <span className='radio-title'>Custom Schedule</span>
-                  <span className='radio-description'>Select specific days to repeat</span>
-                </div>
-              </label>
+          ) : (
+            <div className='form-section'>
+              <label className='section-label'>Meal Type</label>
+              <div className='meal-type-grid'>
+                {MEAL_TYPES.map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setMealType(type)}
+                    className={`meal-type-btn ${mealType === type ? 'active' : ''}`}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Day Selection */}
-          <div className='form-section'>
-            <label className='section-label'>
-              {frequency === 'once' ? 'Select Date(s)' : 'Days of Week'}
-            </label>
-            <div className='days-grid'>
-              {DAYS_OF_WEEK.map(day => (
-                <button
-                  key={day}
-                  type="button"
-                  onClick={() => handleDayToggle(day)}
-                  disabled={frequency === 'weekly'}
-                  className={`day-btn ${selectedDays.includes(day) ? 'active' : ''} ${frequency === 'weekly' ? 'disabled' : ''}`}
-                >
-                  {day.slice(0, 3)}
-                </button>
-              ))}
+          {/* Frequency Selection - hide when specific slot is selected */}
+          {!isSpecificSlot && (
+            <div className='form-section'>
+              <label className='section-label'>Frequency</label>
+              <div className='frequency-options'>
+                <label className='radio-option'>
+                  <input
+                    type="radio"
+                    name="frequency"
+                    value="once"
+                    checked={frequency === 'once'}
+                    onChange={(e) => handleFrequencyChange(e.target.value)}
+                  />
+                  <div className='radio-content'>
+                    <span className='radio-title'>One-Time</span>
+                    <span className='radio-description'>Add to specific dates only</span>
+                  </div>
+                </label>
+
+                <label className='radio-option'>
+                  <input
+                    type="radio"
+                    name="frequency"
+                    value="weekly"
+                    checked={frequency === 'weekly'}
+                    onChange={(e) => handleFrequencyChange(e.target.value)}
+                  />
+                  <div className='radio-content'>
+                    <span className='radio-title'>Weekly Recurring</span>
+                    <span className='radio-description'>Repeat every week</span>
+                  </div>
+                </label>
+
+                <label className='radio-option'>
+                  <input
+                    type="radio"
+                    name="frequency"
+                    value="custom"
+                    checked={frequency === 'custom'}
+                    onChange={(e) => handleFrequencyChange(e.target.value)}
+                  />
+                  <div className='radio-content'>
+                    <span className='radio-title'>Custom Schedule</span>
+                    <span className='radio-description'>Select specific days to repeat</span>
+                  </div>
+                </label>
+              </div>
             </div>
-            {frequency === 'weekly' && (
-              <p className='helper-text'>All days selected for weekly schedule</p>
-            )}
-          </div>
+          )}
 
-          {/* Date Range (for recurring schedules) */}
-          {frequency !== 'once' && (
+          {/* Day Selection - hide when specific slot is selected */}
+          {!isSpecificSlot && (
+            <div className='form-section'>
+              <label className='section-label'>
+                {frequency === 'once' ? 'Select Date(s)' : 'Days of Week'}
+              </label>
+              <div className='days-grid'>
+                {DAYS_OF_WEEK.map(day => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => handleDayToggle(day)}
+                    disabled={frequency === 'weekly'}
+                    className={`day-btn ${selectedDays.includes(day) ? 'active' : ''} ${frequency === 'weekly' ? 'disabled' : ''}`}
+                  >
+                    {day.slice(0, 3)}
+                  </button>
+                ))}
+              </div>
+              {frequency === 'weekly' && (
+                <p className='helper-text'>All days selected for weekly schedule</p>
+              )}
+            </div>
+          )}
+
+          {/* Date Range (for recurring schedules) - hide when specific slot is selected */}
+          {!isSpecificSlot && frequency !== 'once' && (
             <div className='form-section'>
               <label className='section-label'>Schedule Period</label>
               <div className='date-range'>

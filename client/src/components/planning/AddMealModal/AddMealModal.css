@@ -350,16 +350,38 @@
   cursor: not-allowed;
 }
 
+/* Slot Info (when specific slot is selected) */
+.slot-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--primary-light, rgba(59, 130, 246, 0.1));
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+}
+
+.slot-info-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.slot-info-value {
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .meal-type-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .days-grid {
     grid-template-columns: repeat(4, 1fr);
   }
-  
+
   .date-range {
     grid-template-columns: 1fr;
   }

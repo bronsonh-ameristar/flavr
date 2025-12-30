@@ -86,15 +86,17 @@ const EnhancedPlanningPage = () => {
     error,
     addMealToPlan,
     removeMealFromPlan,
-    generateGroceryList
+    generateGroceryList,
+    fetchMealPlans,
+    fetchStats
   } = useMealPlanning(startDateStr, endDateStr);
 
   // Use the new hook for meal viewing/editing
   const {
-    handleViewClick,
-    handleEditClick,
-    handleDeleteClick,
-    handleMealSubmit
+    handleViewMeal: handleViewClick,
+    handleEditMeal: handleEditClick,
+    handleDeleteMeal: handleDeleteClick,
+    handleSaveMeal: handleMealSubmit
   } = useViewMeals({
     deleteMeal,
     updateMeal,
@@ -113,7 +115,9 @@ const EnhancedPlanningPage = () => {
 
   useEffect(() => {
     fetchMeals();
-  }, [fetchMeals]);
+    fetchMealPlans();
+    fetchStats();
+  }, [fetchMeals, fetchMealPlans, fetchStats]);
 
   const handleSlotClick = (dateStr, mealType) => {
     console.log('Slot clicked:', { dateStr, mealType });
@@ -291,6 +295,7 @@ const EnhancedPlanningPage = () => {
               }}
               selected={selectedDays}
               meals={meals}
+              selectedSlot={selectedSlot}
               onSave={async (scheduleData) => {
                 console.log('onSave called with:', scheduleData);
                 console.log('selectedSlot:', selectedSlot);
