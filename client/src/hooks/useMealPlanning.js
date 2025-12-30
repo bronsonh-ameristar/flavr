@@ -25,12 +25,24 @@ export const useMealPlanning = (startDate, endDate) => {
     }
   }, [startDate, endDate]);
 
+  // Fetch statistics
+  const fetchStats = useCallback(async () => {
+    if (!startDate || !endDate) return;
+
+    try {
+      const data = await MealPlanningService.getMealPlanStats(startDate, endDate);
+      setStats(data);
+    } catch (error) {
+      setError(error.message);
+    }
+  }, [startDate, endDate]);
+
   // Add meal to plan
   const addMealToPlan = useCallback(async (date, mealType, mealId) => {
     try {
       const response = await MealPlanningService.addMealToPlan(date, mealType, mealId);
       const key = `${date}-${mealType}`;
-      
+
       setMealPlans(prev => ({
         ...prev,
         [key]: {
@@ -40,30 +52,36 @@ export const useMealPlanning = (startDate, endDate) => {
           meal: response.mealPlan.meal
         }
       }));
-      
+
+      // Refresh stats after adding a meal
+      fetchStats();
+
       return response.mealPlan;
     } catch (error) {
       setError(error.message);
       throw error;
     }
-  }, []);
+  }, [fetchStats]);
 
   // Remove meal from plan
   const removeMealFromPlan = useCallback(async (date, mealType) => {
     try {
       await MealPlanningService.removeMealFromPlan(date, mealType);
       const key = `${date}-${mealType}`;
-      
+
       setMealPlans(prev => {
         const newPlans = { ...prev };
         delete newPlans[key];
         return newPlans;
       });
+
+      // Refresh stats after removing a meal
+      fetchStats();
     } catch (error) {
       setError(error.message);
       throw error;
     }
-  }, []);
+  }, [fetchStats]);
 
   // Generate grocery list
   const generateGroceryList = useCallback(async () => {
@@ -77,18 +95,6 @@ export const useMealPlanning = (startDate, endDate) => {
     } catch (error) {
       setError(error.message);
       // Don't re-throw - let the hook handle errors via state
-    }
-  }, [startDate, endDate]);
-
-  // Fetch statistics
-  const fetchStats = useCallback(async () => {
-    if (!startDate || !endDate) return;
-    
-    try {
-      const data = await MealPlanningService.getMealPlanStats(startDate, endDate);
-      setStats(data);
-    } catch (error) {
-      setError(error.message);
     }
   }, [startDate, endDate]);
 

@@ -4,9 +4,15 @@ import { X, Plus } from 'lucide-react';
 import './AddMealModal.css';
 import MealSelector from '../../planning/MealSelector/MealSelector';
 
-const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = null }) => {
+const DEFAULT_MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
+
+const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = null, mealTypes = [] }) => {
   const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+  // Use provided meal types or fall back to defaults
+  const availableMealTypes = mealTypes.length > 0
+    ? mealTypes.map(t => typeof t === 'string' ? t : t.name)
+    : DEFAULT_MEAL_TYPES;
 
   // Determine initial day from selectedSlot if provided
   const initialDay = useMemo(() => {
@@ -33,6 +39,9 @@ const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = nu
   // Flag to indicate if we're in "specific slot" mode
   const isSpecificSlot = !!selectedSlot;
 
+  // Option to make recurring even when adding to specific slot
+  const [makeRecurring, setMakeRecurring] = useState(false);
+
   const handleDayToggle = (day) => {
     setSelectedDays(prev => 
       prev.includes(day) 
@@ -43,9 +52,8 @@ const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = nu
 
   const handleFrequencyChange = (newFrequency) => {
     setFrequency(newFrequency);
-    if (newFrequency === 'weekly') {
-      setSelectedDays(DAYS_OF_WEEK);
-    } else if (newFrequency === 'once' && selectedDays.length === 0) {
+    // Don't auto-select days, let user choose
+    if (selectedDays.length === 0) {
       setSelectedDays([DAYS_OF_WEEK[0]]);
     }
   };
@@ -56,24 +64,35 @@ const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = nu
     console.log('Selected meal:', selectedMeal);
     console.log('Selected days:', selectedDays);
     console.log('Meal type:', mealType);
+    console.log('Make recurring:', makeRecurring);
 
     if (!selectedMeal) {
       alert('Please select a meal');
       return;
     }
 
-    if (selectedDays.length === 0) {
+    if (!isSpecificSlot && selectedDays.length === 0) {
       alert('Please select at least one day');
       return;
+    }
+
+    // Calculate dayOfWeek for specific slot (for recurring)
+    let dayOfWeek = null;
+    if (isSpecificSlot && selectedSlot?.date) {
+      const date = new Date(selectedSlot.date + 'T00:00:00');
+      dayOfWeek = date.getDay();
     }
 
     const scheduleData = {
       mealId: selectedMeal.id,
       mealType,
       days: selectedDays,
-      frequency,
+      frequency: isSpecificSlot ? (makeRecurring ? 'recurring' : 'once') : frequency,
       startDate,
-      endDate: frequency === 'once' ? null : endDate || null
+      endDate: frequency === 'once' ? null : endDate || null,
+      // Include info for creating recurring meal
+      makeRecurring: isSpecificSlot ? makeRecurring : (frequency === 'recurring'),
+      dayOfWeek
     };
 
     console.log('Schedule data prepared:', scheduleData);
@@ -121,12 +140,25 @@ const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = nu
                   {mealType.charAt(0).toUpperCase() + mealType.slice(1)} on {formatSlotDate(selectedSlot.date)}
                 </span>
               </div>
+              <label className='recurring-checkbox'>
+                <input
+                  type="checkbox"
+                  checked={makeRecurring}
+                  onChange={(e) => setMakeRecurring(e.target.checked)}
+                />
+                <span className='checkbox-content'>
+                  <span className='checkbox-title'>Make this recurring</span>
+                  <span className='checkbox-description'>
+                    Automatically add this meal every {initialDay} for {mealType}
+                  </span>
+                </span>
+              </label>
             </div>
           ) : (
             <div className='form-section'>
               <label className='section-label'>Meal Type</label>
               <div className='meal-type-grid'>
-                {MEAL_TYPES.map(type => (
+                {availableMealTypes.map(type => (
                   <button
                     key={type}
                     type="button"
@@ -155,7 +187,7 @@ const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = nu
                   />
                   <div className='radio-content'>
                     <span className='radio-title'>One-Time</span>
-                    <span className='radio-description'>Add to specific dates only</span>
+                    <span className='radio-description'>Add to this week only</span>
                   </div>
                 </label>
 
@@ -163,27 +195,13 @@ const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = nu
                   <input
                     type="radio"
                     name="frequency"
-                    value="weekly"
-                    checked={frequency === 'weekly'}
+                    value="recurring"
+                    checked={frequency === 'recurring'}
                     onChange={(e) => handleFrequencyChange(e.target.value)}
                   />
                   <div className='radio-content'>
-                    <span className='radio-title'>Weekly Recurring</span>
-                    <span className='radio-description'>Repeat every week</span>
-                  </div>
-                </label>
-
-                <label className='radio-option'>
-                  <input
-                    type="radio"
-                    name="frequency"
-                    value="custom"
-                    checked={frequency === 'custom'}
-                    onChange={(e) => handleFrequencyChange(e.target.value)}
-                  />
-                  <div className='radio-content'>
-                    <span className='radio-title'>Custom Schedule</span>
-                    <span className='radio-description'>Select specific days to repeat</span>
+                    <span className='radio-title'>Recurring</span>
+                    <span className='radio-description'>Repeat on selected days every week</span>
                   </div>
                 </label>
               </div>
@@ -194,7 +212,7 @@ const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = nu
           {!isSpecificSlot && (
             <div className='form-section'>
               <label className='section-label'>
-                {frequency === 'once' ? 'Select Date(s)' : 'Days of Week'}
+                {frequency === 'once' ? 'Select Day(s) for This Week' : 'Select Days to Repeat Weekly'}
               </label>
               <div className='days-grid'>
                 {DAYS_OF_WEEK.map(day => (
@@ -202,15 +220,16 @@ const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = nu
                     key={day}
                     type="button"
                     onClick={() => handleDayToggle(day)}
-                    disabled={frequency === 'weekly'}
-                    className={`day-btn ${selectedDays.includes(day) ? 'active' : ''} ${frequency === 'weekly' ? 'disabled' : ''}`}
+                    className={`day-btn ${selectedDays.includes(day) ? 'active' : ''}`}
                   >
                     {day.slice(0, 3)}
                   </button>
                 ))}
               </div>
-              {frequency === 'weekly' && (
-                <p className='helper-text'>All days selected for weekly schedule</p>
+              {frequency === 'recurring' && selectedDays.length > 0 && (
+                <p className='helper-text'>
+                  This meal will repeat every {selectedDays.join(', ')}
+                </p>
               )}
             </div>
           )}

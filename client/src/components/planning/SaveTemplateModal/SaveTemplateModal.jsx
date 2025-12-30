@@ -34,6 +34,8 @@ const SaveTemplateModal = ({ onClose, weekStart, mealPlans, onSaved }) => {
   const totalMeals = Object.keys(mealPlans).length;
 
   const handleSave = async () => {
+    console.log('handleSave called', { templateName, totalMeals, weekStart });
+
     if (!templateName.trim()) {
       setSaveError('Please enter a template name');
       return;
@@ -47,12 +49,16 @@ const SaveTemplateModal = ({ onClose, weekStart, mealPlans, onSaved }) => {
     try {
       setSaveError('');
       const startDate = weekStart.toISOString().split('T')[0];
-      await saveWeekAsTemplate(startDate, templateName.trim());
+      console.log('Saving template:', { startDate, templateName: templateName.trim() });
+      const result = await saveWeekAsTemplate(startDate, templateName.trim());
+      console.log('Template saved successfully:', result);
+      alert('Template saved successfully!');
       if (onSaved) {
         onSaved();
       }
       onClose();
     } catch (err) {
+      console.error('Error saving template:', err);
       setSaveError(err.message || 'Failed to save template');
     }
   };

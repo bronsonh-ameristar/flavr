@@ -78,12 +78,37 @@
   border-right: 1px solid var(--border-primary);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .meal-type-name {
   font-weight: 600;
   color: var(--text-primary);
   text-transform: capitalize;
+}
+
+.delete-meal-type-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.meal-type-header:hover .delete-meal-type-btn {
+  opacity: 1;
+}
+
+.delete-meal-type-btn:hover {
+  background: var(--danger-light, rgba(239, 68, 68, 0.1));
+  color: var(--danger-color, #ef4444);
 }
 
 .meal-slot {
@@ -121,6 +146,29 @@
   gap: 0.75rem;
   height: 100%;
   align-items: center;
+  position: relative;
+}
+
+/* Recurring meal indicator */
+.recurring-indicator {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--primary-color);
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.recurring-indicator svg {
+  width: 12px;
+  height: 12px;
 }
 
 .planned-meal img {
@@ -209,25 +257,111 @@
   .meal-row {
     grid-template-columns: 80px repeat(7, 1fr);
   }
-  
+
   .day-header,
   .meal-slot {
     padding: 0.5rem 0.25rem;
   }
-  
+
   .day-name {
     font-size: 0.7rem;
   }
-  
+
   .day-number {
     font-size: 1rem;
   }
-  
+
   .meal-type-name {
     font-size: 0.8rem;
   }
-  
+
   .empty-slot span {
     display: none;
   }
+}
+
+/* Add Meal Type Row */
+.add-meal-type-row {
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+}
+
+.add-meal-type-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 2px dashed var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.add-meal-type-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--primary-light, rgba(59, 130, 246, 0.05));
+}
+
+.add-meal-type-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meal-type-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  max-width: 200px;
+}
+
+.meal-type-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.btn-confirm-add,
+.btn-cancel-add {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-confirm-add {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-confirm-add:hover:not(:disabled) {
+  background: var(--primary-dark, #2563eb);
+}
+
+.btn-confirm-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-cancel-add {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.btn-cancel-add:hover {
+  background: var(--bg-secondary);
 }

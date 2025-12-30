@@ -6,6 +6,8 @@ import { useMealPlanning } from '../../hooks/useMealPlanning';
 import { useMeals } from '../../hooks/useMeals';
 import { useViewMeals } from '../../hooks/useViewMeals';
 import { useMealPlanTemplates } from '../../hooks/useMealPlanTemplates';
+import { useRecurringMeals } from '../../hooks/useRecurringMeals';
+import { useCustomMealTypes } from '../../hooks/useCustomMealTypes';
 import PlanningCalendar from '../../components/planning/PlanningCalendar/PlanningCalendar';
 import StatsPanel from '../../components/planning/StatsPanel/StatsPanel';
 import AddMealModal from '../../components/planning/AddMealModal/AddMealModal';
@@ -15,6 +17,7 @@ import MealForm from '../../components/meals/MealForm/MealForm';
 import RecurringMealsModal from '../../components/planning/RecurringMealsModal/RecurringMealsModal';
 import TemplatesModal from '../../components/planning/TemplatesModal/TemplatesModal';
 import SaveTemplateModal from '../../components/planning/SaveTemplateModal/SaveTemplateModal';
+import RecurringDeleteModal from '../../components/planning/RecurringDeleteModal/RecurringDeleteModal';
 import './EnhancedPlanningPage.css';
 
 const EnhancedPlanningPage = () => {
@@ -40,6 +43,7 @@ const EnhancedPlanningPage = () => {
   const [showRecurringMealsModal, setShowRecurringMealsModal] = useState(false);
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [showRecurringDeleteModal, setShowRecurringDeleteModal] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -101,6 +105,16 @@ const EnhancedPlanningPage = () => {
 
   const { copyWeek } = useMealPlanTemplates();
 
+  const { applyRecurringMeals, createRecurringMeal, deleteRecurringMeal, recurringMeals, fetchRecurringMeals } = useRecurringMeals();
+
+  const {
+    allMealTypes,
+    mealTypeNames,
+    fetchCustomMealTypes,
+    createCustomMealType,
+    deleteCustomMealType
+  } = useCustomMealTypes();
+
   // Use the new hook for meal viewing/editing
   const {
     handleViewMeal: handleViewClick,
@@ -125,9 +139,26 @@ const EnhancedPlanningPage = () => {
 
   useEffect(() => {
     fetchMeals();
-    fetchMealPlans();
-    fetchStats();
-  }, [fetchMeals, fetchMealPlans, fetchStats]);
+    fetchRecurringMeals();
+    fetchCustomMealTypes();
+  }, [fetchMeals, fetchRecurringMeals, fetchCustomMealTypes]);
+
+  // Fetch meal plans and apply recurring meals when week changes
+  useEffect(() => {
+    const loadWeekData = async () => {
+      // First apply recurring meals to fill in any gaps
+      try {
+        await applyRecurringMeals(startDateStr, endDateStr);
+      } catch (err) {
+        // Silently ignore errors - recurring meals might not exist or user might not have any
+        console.log('Auto-apply recurring meals:', err.message);
+      }
+      // Then fetch the meal plans (which now include any applied recurring meals)
+      fetchMealPlans();
+      fetchStats();
+    };
+    loadWeekData();
+  }, [startDateStr, endDateStr, applyRecurringMeals, fetchMealPlans, fetchStats]);
 
   const handleSlotClick = (dateStr, mealType) => {
     console.log('Slot clicked:', { dateStr, mealType });
@@ -200,8 +231,8 @@ const EnhancedPlanningPage = () => {
       return;
     }
 
-    const validMealTypes = ['breakfast', 'lunch', 'dinner'];
-    if (!validMealTypes.includes(mealType)) {
+    // Validate meal type against available types (including custom ones)
+    if (!mealTypeNames.includes(mealType)) {
       alert('Invalid meal type: ' + mealType);
       return;
     }
@@ -274,6 +305,52 @@ const EnhancedPlanningPage = () => {
   const handlePlanningApplied = () => {
     fetchMealPlans();
     fetchStats();
+    fetchRecurringMeals();
+  };
+
+  // Helper to check if current occupied slot is from a recurring meal
+  const getRecurringMealForSlot = (dateStr, mealType, meal) => {
+    if (!meal || recurringMeals.length === 0) return null;
+    const date = new Date(dateStr + 'T00:00:00');
+    const dayOfWeek = date.getDay();
+    return recurringMeals.find(rm =>
+      rm.dayOfWeek === dayOfWeek &&
+      rm.mealType === mealType &&
+      rm.mealId === meal.id
+    );
+  };
+
+  const isCurrentSlotRecurring = occupiedDate && occupiedMealType && viewingMeal
+    ? !!getRecurringMealForSlot(occupiedDate, occupiedMealType, viewingMeal)
+    : false;
+
+  // Handlers for recurring meal deletion
+  const handleDeleteThisOnly = async () => {
+    // Just remove from the current day's meal plan
+    await removeMealFromPlan(occupiedDate, occupiedMealType);
+    setShowRecurringDeleteModal(false);
+    setShowOccupiedSlotModal(false);
+  };
+
+  const handleDeleteThisAndFuture = async () => {
+    // Remove from current plan and delete the recurring rule
+    const recurringMeal = getRecurringMealForSlot(occupiedDate, occupiedMealType, viewingMeal);
+    await removeMealFromPlan(occupiedDate, occupiedMealType);
+    if (recurringMeal) {
+      await deleteRecurringMeal(recurringMeal.id);
+    }
+    setShowRecurringDeleteModal(false);
+    setShowOccupiedSlotModal(false);
+  };
+
+  const handleDeleteRecurringRule = async () => {
+    // Just delete the recurring rule, leave the current meal plan entry
+    const recurringMeal = getRecurringMealForSlot(occupiedDate, occupiedMealType, viewingMeal);
+    if (recurringMeal) {
+      await deleteRecurringMeal(recurringMeal.id);
+    }
+    setShowRecurringDeleteModal(false);
+    setShowOccupiedSlotModal(false);
   };
 
   return (
@@ -359,6 +436,7 @@ const EnhancedPlanningPage = () => {
               selected={selectedDays}
               meals={meals}
               selectedSlot={selectedSlot}
+              mealTypes={allMealTypes}
               onSave={async (scheduleData) => {
                 console.log('onSave called with:', scheduleData);
                 console.log('selectedSlot:', selectedSlot);
@@ -367,18 +445,54 @@ const EnhancedPlanningPage = () => {
                   if (selectedSlot) {
                     console.log(`Adding meal ${scheduleData.mealId} to slot:`, selectedSlot);
                     await addMealToPlan(selectedSlot.date, selectedSlot.mealType, scheduleData.mealId);
+
+                    // If makeRecurring is checked, also create a recurring meal
+                    if (scheduleData.makeRecurring && scheduleData.dayOfWeek !== null) {
+                      console.log('Creating recurring meal:', {
+                        mealId: scheduleData.mealId,
+                        dayOfWeek: scheduleData.dayOfWeek,
+                        mealType: scheduleData.mealType
+                      });
+                      try {
+                        await createRecurringMeal({
+                          mealId: scheduleData.mealId,
+                          dayOfWeek: scheduleData.dayOfWeek,
+                          mealType: scheduleData.mealType
+                        });
+                        console.log('Recurring meal created successfully');
+                      } catch (recurringError) {
+                        console.error('Failed to create recurring meal:', recurringError);
+                        // Don't fail the whole operation, just warn
+                        alert('Meal added to plan, but failed to create recurring schedule: ' + recurringError.message);
+                      }
+                    }
                   } else {
                     // Otherwise, add meal to each selected day
                     console.log('Adding meal to multiple days:', scheduleData.days);
+                    const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
                     for (const day of scheduleData.days) {
                       // Convert day name to actual date
-                      const dayIndex = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(day);
+                      const dayIndex = DAYS_OF_WEEK.indexOf(day);
                       const targetDate = new Date(weekStart);
                       targetDate.setDate(weekStart.getDate() + dayIndex);
                       const dateStr = targetDate.toISOString().split('T')[0];
                       console.log(`Adding meal to ${day} (${dateStr})`);
 
                       await addMealToPlan(dateStr, scheduleData.mealType, scheduleData.mealId);
+
+                      // If recurring (weekly or custom), also create recurring meals
+                      if (scheduleData.makeRecurring) {
+                        try {
+                          await createRecurringMeal({
+                            mealId: scheduleData.mealId,
+                            dayOfWeek: dayIndex,
+                            mealType: scheduleData.mealType
+                          });
+                        } catch (recurringError) {
+                          console.error(`Failed to create recurring meal for ${day}:`, recurringError);
+                        }
+                      }
                     }
                   }
                   console.log('Meal(s) added successfully');
@@ -401,11 +515,17 @@ const EnhancedPlanningPage = () => {
               }}
               openAddModal={() => {
                 setShowOccupiedSlotModal(false);
+                setSelectedSlot({ date: occupiedDate, mealType: occupiedMealType });
                 setShowAddMealModal(true);
               }}
               openViewModal={() => {
                 setShowOccupiedSlotModal(false);
                 handleViewMeal(viewingMeal);
+              }}
+              isRecurring={isCurrentSlotRecurring}
+              onOpenRecurringDelete={() => {
+                setShowOccupiedSlotModal(false);
+                setShowRecurringDeleteModal(true);
               }}
             />
           )}
@@ -459,6 +579,16 @@ const EnhancedPlanningPage = () => {
               onSaved={handlePlanningApplied}
             />
           )}
+
+          {showRecurringDeleteModal && viewingMeal && (
+            <RecurringDeleteModal
+              onClose={() => setShowRecurringDeleteModal(false)}
+              mealName={viewingMeal.name}
+              onDeleteThisOnly={handleDeleteThisOnly}
+              onDeleteThisAndFuture={handleDeleteThisAndFuture}
+              onDeleteRecurringRule={handleDeleteRecurringRule}
+            />
+          )}
         </div>
 
         {error && (
@@ -474,6 +604,10 @@ const EnhancedPlanningPage = () => {
               mealPlans={mealPlans}
               onSlotClick={handleSlotClick}
               loading={loading}
+              recurringMeals={recurringMeals}
+              allMealTypes={allMealTypes}
+              onAddMealType={createCustomMealType}
+              onDeleteMealType={deleteCustomMealType}
             />
 
             <StatsPanel stats={stats} />

@@ -359,6 +359,7 @@
   background: var(--primary-light, rgba(59, 130, 246, 0.1));
   border: 2px solid var(--primary-color);
   border-radius: 8px;
+  margin-bottom: 1rem;
 }
 
 .slot-info-label {
@@ -370,6 +371,54 @@
   font-weight: 600;
   color: var(--primary-color);
   font-size: 1rem;
+}
+
+/* Recurring Checkbox */
+.recurring-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid var(--border-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg-primary);
+}
+
+.recurring-checkbox:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--primary-color);
+}
+
+.recurring-checkbox:has(input:checked) {
+  background: var(--success-light, rgba(16, 185, 129, 0.1));
+  border-color: var(--success-color, #10b981);
+}
+
+.recurring-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 0.125rem;
+  cursor: pointer;
+  accent-color: var(--success-color, #10b981);
+}
+
+.checkbox-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.checkbox-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.checkbox-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
 }
 
 /* Responsive */
