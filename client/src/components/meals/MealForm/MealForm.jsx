@@ -1,7 +1,14 @@
 // client/src/components/meals/MealForm/MealForm.jsx
 import React, { useState } from 'react';
-import { Plus, Minus, Save, X } from 'lucide-react';
+import { Plus, Minus, Save, X, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import './MealForm.css';
+
+const STEP_CATEGORIES = [
+  { value: 'prep', label: 'Prep' },
+  { value: 'cooking', label: 'Cooking' },
+  { value: 'assembly', label: 'Assembly' },
+  { value: 'resting', label: 'Resting' }
+];
 
 const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
   const [formData, setFormData] = useState({
@@ -16,12 +23,17 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
     instructions: meal?.instructions || '',
     imageUrl: meal?.imageUrl || '',
     ingredients: meal?.ingredients || [{ name: '', quantity: '', unit: '', category: 'pantry' }],
+    structuredInstructions: meal?.structuredInstructions || [],
     // Nutrition fields
     calories: meal?.calories || '',
     protein: meal?.protein || '',
     carbs: meal?.carbs || '',
     fat: meal?.fat || ''
   });
+
+  const [useStructuredInstructions, setUseStructuredInstructions] = useState(
+    meal?.structuredInstructions && meal.structuredInstructions.length > 0
+  );
 
   const [errors, setErrors] = useState({});
 
@@ -76,6 +88,78 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
     }
   };
 
+  // Structured instructions handlers
+  const addStep = () => {
+    const newStep = {
+      stepNumber: formData.structuredInstructions.length + 1,
+      action: '',
+      duration: 0,
+      ingredientRefs: [],
+      category: 'prep'
+    };
+    setFormData(prev => ({
+      ...prev,
+      structuredInstructions: [...prev.structuredInstructions, newStep]
+    }));
+  };
+
+  const removeStep = (index) => {
+    const newSteps = formData.structuredInstructions
+      .filter((_, i) => i !== index)
+      .map((step, i) => ({ ...step, stepNumber: i + 1 }));
+    setFormData(prev => ({
+      ...prev,
+      structuredInstructions: newSteps
+    }));
+  };
+
+  const handleStepChange = (index, field, value) => {
+    const newSteps = [...formData.structuredInstructions];
+    newSteps[index] = {
+      ...newSteps[index],
+      [field]: value
+    };
+    setFormData(prev => ({
+      ...prev,
+      structuredInstructions: newSteps
+    }));
+  };
+
+  const moveStep = (index, direction) => {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= formData.structuredInstructions.length) return;
+
+    const newSteps = [...formData.structuredInstructions];
+    [newSteps[index], newSteps[newIndex]] = [newSteps[newIndex], newSteps[index]];
+
+    // Renumber steps
+    newSteps.forEach((step, i) => {
+      step.stepNumber = i + 1;
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      structuredInstructions: newSteps
+    }));
+  };
+
+  const toggleIngredientRef = (stepIndex, ingredientName) => {
+    const step = formData.structuredInstructions[stepIndex];
+    const refs = step.ingredientRefs || [];
+    const newRefs = refs.includes(ingredientName)
+      ? refs.filter(r => r !== ingredientName)
+      : [...refs, ingredientName];
+
+    handleStepChange(stepIndex, 'ingredientRefs', newRefs);
+  };
+
+  // Get valid ingredient names for reference selection
+  const getIngredientNames = () => {
+    return formData.ingredients
+      .filter(ing => ing.name.trim())
+      .map(ing => ing.name.trim());
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -113,6 +197,11 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
       ing.name.trim() && ing.quantity.trim()
     );
 
+    // Validate structured instructions if using them
+    const validStructuredInstructions = useStructuredInstructions
+      ? formData.structuredInstructions.filter(step => step.action.trim())
+      : null;
+
     const submitData = {
       ...formData,
       ingredients: validIngredients,
@@ -123,7 +212,15 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
       calories: formData.calories !== '' ? parseInt(formData.calories) : null,
       protein: formData.protein !== '' ? parseInt(formData.protein) : null,
       carbs: formData.carbs !== '' ? parseInt(formData.carbs) : null,
-      fat: formData.fat !== '' ? parseInt(formData.fat) : null
+      fat: formData.fat !== '' ? parseInt(formData.fat) : null,
+      // Include structured instructions if enabled and has valid steps
+      structuredInstructions: validStructuredInstructions && validStructuredInstructions.length > 0
+        ? validStructuredInstructions.map((step, index) => ({
+            ...step,
+            stepNumber: index + 1,
+            duration: parseInt(step.duration) || 0
+          }))
+        : null
     };
 
     try {
@@ -409,16 +506,141 @@ const MealForm = ({ meal = null, onSave, onCancel, isLoading = false }) => {
           </div>
 
           <div className="form-section">
-            <h3>Instructions</h3>
-            <div className="form-group">
-              <textarea
-                value={formData.instructions}
-                onChange={(e) => handleInputChange('instructions', e.target.value)}
-                placeholder="Step-by-step cooking instructions..."
-                rows="6"
-                className="instructions-textarea"
-              />
+            <div className="section-header instructions-header">
+              <h3>Instructions</h3>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={useStructuredInstructions}
+                  onChange={(e) => {
+                    setUseStructuredInstructions(e.target.checked);
+                    if (e.target.checked && formData.structuredInstructions.length === 0) {
+                      addStep();
+                    }
+                  }}
+                />
+                <span className="toggle-slider"></span>
+                <span className="toggle-label">Use Structured Steps</span>
+              </label>
             </div>
+
+            {!useStructuredInstructions ? (
+              <div className="form-group">
+                <textarea
+                  value={formData.instructions}
+                  onChange={(e) => handleInputChange('instructions', e.target.value)}
+                  placeholder="Step-by-step cooking instructions..."
+                  rows="6"
+                  className="instructions-textarea"
+                />
+              </div>
+            ) : (
+              <div className="structured-instructions">
+                <p className="helper-text">
+                  Add structured steps for better meal prep planning. Each step can have a duration and linked ingredients.
+                </p>
+
+                {formData.structuredInstructions.map((step, index) => (
+                  <div key={index} className="instruction-step">
+                    <div className="step-header">
+                      <div className="step-number">Step {step.stepNumber}</div>
+                      <div className="step-controls">
+                        <button
+                          type="button"
+                          onClick={() => moveStep(index, -1)}
+                          disabled={index === 0}
+                          className="step-move-btn"
+                          title="Move up"
+                        >
+                          <ChevronUp size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveStep(index, 1)}
+                          disabled={index === formData.structuredInstructions.length - 1}
+                          className="step-move-btn"
+                          title="Move down"
+                        >
+                          <ChevronDown size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeStep(index)}
+                          className="step-remove-btn"
+                          title="Remove step"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="step-content">
+                      <div className="step-row">
+                        <div className="form-group step-action">
+                          <label>Action</label>
+                          <textarea
+                            value={step.action}
+                            onChange={(e) => handleStepChange(index, 'action', e.target.value)}
+                            placeholder="What to do in this step..."
+                            rows="2"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="step-row step-meta">
+                        <div className="form-group step-duration">
+                          <label>Duration (min)</label>
+                          <input
+                            type="number"
+                            value={step.duration}
+                            onChange={(e) => handleStepChange(index, 'duration', e.target.value)}
+                            min="0"
+                            placeholder="0"
+                          />
+                        </div>
+
+                        <div className="form-group step-category">
+                          <label>Category</label>
+                          <select
+                            value={step.category}
+                            onChange={(e) => handleStepChange(index, 'category', e.target.value)}
+                          >
+                            {STEP_CATEGORIES.map(cat => (
+                              <option key={cat.value} value={cat.value}>
+                                {cat.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {getIngredientNames().length > 0 && (
+                        <div className="step-ingredients">
+                          <label>Ingredients Used</label>
+                          <div className="ingredient-chips">
+                            {getIngredientNames().map(name => (
+                              <button
+                                key={name}
+                                type="button"
+                                className={`ingredient-chip ${(step.ingredientRefs || []).includes(name) ? 'selected' : ''}`}
+                                onClick={() => toggleIngredientRef(index, name)}
+                              >
+                                {name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                <button type="button" onClick={addStep} className="add-step-btn">
+                  <Plus size={16} />
+                  Add Step
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="form-actions">

@@ -39,7 +39,8 @@ class MealService {
             }],
             limit: parseInt(limit),
             offset: parseInt(offset),
-            order: [['createdAt', 'DESC']]
+            order: [['createdAt', 'DESC']],
+            distinct: true
         });
 
         return {
@@ -277,7 +278,8 @@ class MealService {
             }],
             limit: parseInt(limit),
             offset: parseInt(offset),
-            order: [['name', 'ASC']]
+            order: [['name', 'ASC']],
+            distinct: true
         });
 
         return {

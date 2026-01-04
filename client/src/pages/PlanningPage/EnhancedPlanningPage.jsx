@@ -18,6 +18,7 @@ import RecurringMealsModal from '../../components/planning/RecurringMealsModal/R
 import TemplatesModal from '../../components/planning/TemplatesModal/TemplatesModal';
 import SaveTemplateModal from '../../components/planning/SaveTemplateModal/SaveTemplateModal';
 import RecurringDeleteModal from '../../components/planning/RecurringDeleteModal/RecurringDeleteModal';
+import MealPrepPanel from '../../components/planning/MealPrepPanel/MealPrepPanel';
 import './EnhancedPlanningPage.css';
 
 const EnhancedPlanningPage = () => {
@@ -384,47 +385,53 @@ const EnhancedPlanningPage = () => {
                 setShowMealSelector(true);
                 setShowAddMealModal(true);
               }}
+              title="Quick Add"
             >
               <Plus size={16} />
               Quick Add
             </button>
             <button
-              className="btn-icon"
-              onClick={() => setShowRecurringMealsModal(true)}
-              title="Recurring Meals"
-            >
-              <RotateCcw size={18} />
-            </button>
-            <button
-              className="btn-icon"
-              onClick={() => setShowTemplatesModal(true)}
-              title="Templates"
-            >
-              <FileText size={18} />
-            </button>
-            <button
-              className="btn-icon"
+              className="btn-primary"
               onClick={handleCopyPreviousWeek}
               title="Copy Previous Week"
             >
-              <Copy size={18} />
+              <Copy size={16} />
+              Copy Previous Week
             </button>
             <button
-              className="btn-icon"
+              className="btn-primary"
+              onClick={() => setShowRecurringMealsModal(true)}
+              title="Recurring Meals"
+            >
+              <RotateCcw size={16} />
+              Recurring Meals
+            </button>
+            <button
+              className="btn-primary"
+              onClick={() => setShowTemplatesModal(true)}
+              title="Templates"
+            >
+              <FileText size={16} />
+              Templates
+            </button>
+            <button
+              className="btn-primary"
               onClick={() => setShowSaveTemplateModal(true)}
               title="Save as Template"
               disabled={Object.keys(mealPlans).length === 0}
             >
-              <Save size={18} />
+              <Save size={16} />
+              Save Week as Template
             </button>
-            <button
-              className="btn-primary"
+            {/* <button
+              className="btn-secondary"
               onClick={handleGenerateGroceryList}
               disabled={Object.keys(mealPlans).length === 0}
+              title="Grocery List"
             >
               <ShoppingCart size={16} />
-              Grocery List
-            </button>
+              Create Grocery List
+            </button> */}
           </div>
 
           {showAddMealModal && (
@@ -611,6 +618,8 @@ const EnhancedPlanningPage = () => {
             />
 
             <StatsPanel stats={stats} />
+
+            <MealPrepPanel meals={meals} />
           </div>
         </div>
 

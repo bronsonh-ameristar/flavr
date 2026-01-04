@@ -125,6 +125,37 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    structuredInstructions: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: null,
+      validate: {
+        isValidStructure(value) {
+          if (value === null || value === undefined) return;
+          if (!Array.isArray(value)) {
+            throw new Error('structuredInstructions must be an array');
+          }
+          const validCategories = ['prep', 'cooking', 'assembly', 'resting'];
+          value.forEach((step, index) => {
+            if (typeof step.stepNumber !== 'number') {
+              throw new Error(`Step ${index + 1}: stepNumber must be a number`);
+            }
+            if (typeof step.action !== 'string' || !step.action.trim()) {
+              throw new Error(`Step ${index + 1}: action is required`);
+            }
+            if (step.duration !== undefined && typeof step.duration !== 'number') {
+              throw new Error(`Step ${index + 1}: duration must be a number`);
+            }
+            if (step.category && !validCategories.includes(step.category)) {
+              throw new Error(`Step ${index + 1}: category must be one of: ${validCategories.join(', ')}`);
+            }
+            if (step.ingredientRefs && !Array.isArray(step.ingredientRefs)) {
+              throw new Error(`Step ${index + 1}: ingredientRefs must be an array`);
+            }
+          });
+        }
+      }
+    },
     imageUrl: {
       type: DataTypes.STRING,
       allowNull: true,

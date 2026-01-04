@@ -1,5 +1,6 @@
 const { MealPlan, Meal, Ingredient, MealPlanTemplate, MealPlanTemplateItem } = require('../../models');
 const { Op } = require('sequelize');
+const PrepPlanService = require('../services/prepPlanService');
 
 class MealPlansController {
   // Get meal plans for a date range (typically a week) - filtered by user
@@ -30,7 +31,11 @@ class MealPlansController {
         include: [{
           model: Meal,
           as: 'meal',
-          attributes: ['id', 'name', 'prepTime', 'cookTime', 'servings', 'category', 'difficulty', 'imageUrl']
+          include: [{
+            model: Ingredient,
+            as: 'ingredients',
+            attributes: ['id', 'name', 'quantity', 'unit', 'category', 'notes', 'store']
+          }]
         }],
         order: [['date', 'ASC'], ['mealType', 'ASC']]
       });
@@ -538,6 +543,46 @@ class MealPlansController {
     } catch (error) {
       console.error('Error saving week as template:', error);
       res.status(500).json({ error: 'Failed to save week as template' });
+    }
+  }
+
+  // Generate a consolidated prep plan for multiple meals
+  static async generatePrepPlan(req, res) {
+    try {
+      const userId = req.userId;
+      const { meals } = req.body;
+
+      if (!meals || !Array.isArray(meals) || meals.length === 0) {
+        return res.status(400).json({
+          error: 'meals array is required with at least one meal'
+        });
+      }
+
+      // Validate each meal request
+      for (const meal of meals) {
+        if (!meal.mealId || typeof meal.mealId !== 'number') {
+          return res.status(400).json({
+            error: 'Each meal must have a valid mealId (number)'
+          });
+        }
+        if (!meal.servings || typeof meal.servings !== 'number' || meal.servings < 1) {
+          return res.status(400).json({
+            error: 'Each meal must have valid servings (number >= 1)'
+          });
+        }
+      }
+
+      const prepPlan = await PrepPlanService.generatePrepPlan(meals, userId);
+
+      res.json(prepPlan);
+    } catch (error) {
+      console.error('Error generating prep plan:', error);
+
+      if (error.message.includes('not found') || error.message.includes('Access denied')) {
+        return res.status(404).json({ error: error.message });
+      }
+
+      res.status(500).json({ error: 'Failed to generate prep plan' });
     }
   }
 }

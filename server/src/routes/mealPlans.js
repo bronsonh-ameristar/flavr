@@ -18,6 +18,9 @@ router.post('/copy-week', authenticate, MealPlansController.copyWeek);
 // POST /api/meal-plans/save-as-template - Save a week as a template
 router.post('/save-as-template', authenticate, MealPlansController.saveAsTemplate);
 
+// POST /api/meal-plans/prep-plan - Generate a consolidated prep plan
+router.post('/prep-plan', authenticate, MealPlansController.generatePrepPlan);
+
 // GET /api/meal-plans - Get meal plans for date range
 router.get('/', authenticate, MealPlansController.getMealPlans);
 

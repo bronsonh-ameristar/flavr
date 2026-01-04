@@ -1,7 +1,7 @@
 /* client/src/pages/MealsPage/MealsPage.css */
 .meals-page {
   padding: 2rem;
-  max-width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -37,10 +37,7 @@
 }
 
 .meals-controls {
-  display: flex;
-  gap: 1rem;
   margin-bottom: 2rem;
-  flex-wrap: wrap;
 }
 
 .search-bar {
@@ -94,6 +91,12 @@
 
 .filter-section select:focus {
   outline: none;
+}
+
+.filters-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .meals-grid {
