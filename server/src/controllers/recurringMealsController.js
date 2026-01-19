@@ -1,6 +1,14 @@
 const { RecurringMeal, Meal, MealPlan } = require('../../models');
 const { Op } = require('sequelize');
 
+// Format date to YYYY-MM-DD in local timezone (avoids UTC shift from toISOString)
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 class RecurringMealsController {
   // Get all recurring meals for the current user
   static async getRecurringMeals(req, res) {
@@ -216,7 +224,7 @@ class RecurringMealsController {
 
       for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
         const dayOfWeek = date.getDay();
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = formatLocalDate(date);
 
         // Find recurring meals for this day of week
         const mealsForDay = recurringMeals.filter(rm => rm.dayOfWeek === dayOfWeek);

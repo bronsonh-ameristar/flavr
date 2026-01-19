@@ -4,8 +4,16 @@ import { useDroppable } from '@dnd-kit/core';
 import { Plus, RotateCcw, X } from 'lucide-react';
 import './PlanningCalendar.css';
 
+// Format date to YYYY-MM-DD in local timezone (avoids UTC shift from toISOString)
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const DroppableSlot = ({ date, mealType, meal, onSlotClick, isToday, isRecurring }) => {
-  const dateStr = date.toISOString().split('T')[0];
+  const dateStr = formatLocalDate(date);
 
   // Use a clear prefix to identify droppable slots: "slot-YYYY-MM-DD-mealType"
   const dropId = `slot-${dateStr}-${mealType}`;
@@ -168,7 +176,7 @@ const PlanningCalendar = ({
             </div>
 
             {weekDays.map((date, dayIndex) => {
-              const dateStr = date.toISOString().split('T')[0];
+              const dateStr = formatLocalDate(date);
               const planKey = `${dateStr}-${mealType}`;
               const meal = mealPlans[planKey]?.meal;
 

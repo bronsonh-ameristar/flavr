@@ -4,6 +4,14 @@ import { X, Plus } from 'lucide-react';
 import './AddMealModal.css';
 import MealSelector from '../../planning/MealSelector/MealSelector';
 
+// Format date to YYYY-MM-DD in local timezone (avoids UTC shift from toISOString)
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const DEFAULT_MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
 
 const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = null, mealTypes = [] }) => {
@@ -32,7 +40,7 @@ const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = nu
   const [mealType, setMealType] = useState(initialMealType);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    return formatLocalDate(today);
   });
   const [endDate, setEndDate] = useState('');
 

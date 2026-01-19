@@ -3,6 +3,14 @@ import { X, Save, FileText } from 'lucide-react';
 import { useMealPlanTemplates } from '../../../hooks/useMealPlanTemplates';
 import './SaveTemplateModal.css';
 
+// Format date to YYYY-MM-DD in local timezone (avoids UTC shift from toISOString)
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const SaveTemplateModal = ({ onClose, weekStart, mealPlans, onSaved }) => {
@@ -48,7 +56,7 @@ const SaveTemplateModal = ({ onClose, weekStart, mealPlans, onSaved }) => {
 
     try {
       setSaveError('');
-      const startDate = weekStart.toISOString().split('T')[0];
+      const startDate = formatLocalDate(weekStart);
       console.log('Saving template:', { startDate, templateName: templateName.trim() });
       const result = await saveWeekAsTemplate(startDate, templateName.trim());
       console.log('Template saved successfully:', result);

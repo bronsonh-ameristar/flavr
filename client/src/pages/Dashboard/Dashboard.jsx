@@ -6,6 +6,14 @@ import { useMeals } from '../../hooks/useMeals';
 import { consolidateIngredients } from '../../utils/unitConverter';
 import './Dashboard.css';
 
+// Format date to YYYY-MM-DD in local timezone (avoids UTC shift from toISOString)
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const Dashboard = () => {
   // Get current week dates for meal planning context
   const getWeekDates = () => {
@@ -15,8 +23,8 @@ const Dashboard = () => {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
     return {
-      startDate: weekStart.toISOString().split('T')[0],
-      endDate: weekEnd.toISOString().split('T')[0]
+      startDate: formatLocalDate(weekStart),
+      endDate: formatLocalDate(weekEnd)
     };
   };
 
@@ -77,7 +85,7 @@ const Dashboard = () => {
 
   // Get today's meal plan
   const todaysMeals = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = formatLocalDate(new Date());
     const todayPlans = Object.values(mealPlans).filter(plan => plan.date === todayStr);
 
     // Sort by meal type order

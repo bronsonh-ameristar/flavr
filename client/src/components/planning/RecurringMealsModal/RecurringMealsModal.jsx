@@ -4,6 +4,14 @@ import { useRecurringMeals } from '../../../hooks/useRecurringMeals';
 import MealSelector from '../MealSelector/MealSelector';
 import './RecurringMealsModal.css';
 
+// Format date to YYYY-MM-DD in local timezone (avoids UTC shift from toISOString)
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'];
 
@@ -73,10 +81,10 @@ const RecurringMealsModal = ({ onClose, meals = [], weekStart, onApplied }) => {
       return;
     }
 
-    const startDate = weekStart.toISOString().split('T')[0];
+    const startDate = formatLocalDate(weekStart);
     const endDate = new Date(weekStart);
     endDate.setDate(endDate.getDate() + 6);
-    const endDateStr = endDate.toISOString().split('T')[0];
+    const endDateStr = formatLocalDate(endDate);
 
     try {
       const result = await applyRecurringMeals(startDate, endDateStr);

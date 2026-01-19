@@ -1,6 +1,14 @@
 const { MealPlanTemplate, MealPlanTemplateItem, Meal, MealPlan } = require('../../models');
 const { Op } = require('sequelize');
 
+// Format date to YYYY-MM-DD in local timezone (avoids UTC shift from toISOString)
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 class MealPlanTemplatesController {
   // Get all templates for the current user
   static async getTemplates(req, res) {
@@ -245,7 +253,7 @@ class MealPlanTemplatesController {
       for (const item of template.items) {
         const targetDate = new Date(weekStart);
         targetDate.setDate(weekStart.getDate() + item.dayOfWeek);
-        const dateStr = targetDate.toISOString().split('T')[0];
+        const dateStr = formatLocalDate(targetDate);
 
         // Check if meal plan already exists
         const existing = await MealPlan.findOne({

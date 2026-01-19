@@ -18,8 +18,17 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     // Helper method to format date for frontend
+    // Note: DATEONLY fields in Sequelize are returned as strings in YYYY-MM-DD format
     getFormattedDate() {
-      return this.date.toISOString().split('T')[0];
+      // If date is already a string (DATEONLY), return as-is
+      if (typeof this.date === 'string') {
+        return this.date;
+      }
+      // If it's a Date object, format it in local timezone
+      const year = this.date.getFullYear();
+      const month = String(this.date.getMonth() + 1).padStart(2, '0');
+      const day = String(this.date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
 
     // Helper method to get meal plan key for frontend

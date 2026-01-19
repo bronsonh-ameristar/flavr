@@ -2,6 +2,14 @@ const { MealPlan, Meal, Ingredient, MealPlanTemplate, MealPlanTemplateItem } = r
 const { Op } = require('sequelize');
 const PrepPlanService = require('../services/prepPlanService');
 
+// Format date to YYYY-MM-DD in local timezone (avoids UTC shift from toISOString)
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 class MealPlansController {
   // Get meal plans for a date range (typically a week) - filtered by user
   static async getMealPlans(req, res) {
@@ -401,7 +409,7 @@ class MealPlansController {
         where: {
           userId,
           date: {
-            [Op.between]: [sourceStartDate, sourceEnd.toISOString().split('T')[0]]
+            [Op.between]: [sourceStartDate, formatLocalDate(sourceEnd)]
           }
         }
       });
@@ -427,7 +435,7 @@ class MealPlansController {
         // Calculate target date
         const targetDate = new Date(targetStart);
         targetDate.setDate(targetDate.getDate() + dayOffset);
-        const targetDateStr = targetDate.toISOString().split('T')[0];
+        const targetDateStr = formatLocalDate(targetDate);
 
         // Check if meal plan already exists
         const existing = await MealPlan.findOne({
@@ -490,7 +498,7 @@ class MealPlansController {
         where: {
           userId,
           date: {
-            [Op.between]: [weekStartDate, weekEnd.toISOString().split('T')[0]]
+            [Op.between]: [weekStartDate, formatLocalDate(weekEnd)]
           }
         }
       });

@@ -21,6 +21,14 @@ import RecurringDeleteModal from '../../components/planning/RecurringDeleteModal
 import MealPrepPanel from '../../components/planning/MealPrepPanel/MealPrepPanel';
 import './EnhancedPlanningPage.css';
 
+// Format date to YYYY-MM-DD in local timezone (avoids UTC shift from toISOString)
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const EnhancedPlanningPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showMealSelector, setShowMealSelector] = useState(false);
@@ -65,8 +73,8 @@ const EnhancedPlanningPage = () => {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 6);
 
-  const startDateStr = weekStart.toISOString().split('T')[0];
-  const endDateStr = weekEnd.toISOString().split('T')[0];
+  const startDateStr = formatLocalDate(weekStart);
+  const endDateStr = formatLocalDate(weekEnd);
 
   // Generate week days for calendar
   const weekDays = [];
@@ -288,8 +296,8 @@ const EnhancedPlanningPage = () => {
   const handleCopyPreviousWeek = async () => {
     const previousWeekStart = new Date(weekStart);
     previousWeekStart.setDate(previousWeekStart.getDate() - 7);
-    const sourceStartDate = previousWeekStart.toISOString().split('T')[0];
-    const targetStartDate = weekStart.toISOString().split('T')[0];
+    const sourceStartDate = formatLocalDate(previousWeekStart);
+    const targetStartDate = formatLocalDate(weekStart);
 
     if (window.confirm('Copy meals from the previous week to this week? Existing meals will not be overwritten.')) {
       try {
@@ -483,7 +491,7 @@ const EnhancedPlanningPage = () => {
                       const dayIndex = DAYS_OF_WEEK.indexOf(day);
                       const targetDate = new Date(weekStart);
                       targetDate.setDate(weekStart.getDate() + dayIndex);
-                      const dateStr = targetDate.toISOString().split('T')[0];
+                      const dateStr = formatLocalDate(targetDate);
                       console.log(`Adding meal to ${day} (${dateStr})`);
 
                       await addMealToPlan(dateStr, scheduleData.mealType, scheduleData.mealId);
