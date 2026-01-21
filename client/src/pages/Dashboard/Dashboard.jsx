@@ -31,7 +31,7 @@ const Dashboard = () => {
   const { startDate, endDate } = getWeekDates();
 
   // Hooks for data
-  const { meals, totalCount: totalRecipes, fetchMeals } = useMeals();
+  const { totalCount: totalRecipes, fetchMeals } = useMeals();
   const {
     mealPlans,
     fetchMealPlans,

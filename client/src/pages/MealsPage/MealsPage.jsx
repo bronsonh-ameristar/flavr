@@ -35,7 +35,6 @@ const MealsPage = () => {
   } = useMeals();
 
   const {
-    handleDeleteMeal,
     handleAddMeal,
     handleEditMeal,
     handleViewMeal,
@@ -102,7 +101,7 @@ const MealsPage = () => {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, selectedCategory, selectedCuisine]);
+  }, [searchTerm, selectedCategory, selectedCuisine, fetchMeals]);
 
   if (loading && meals.length === 0) {
     return (

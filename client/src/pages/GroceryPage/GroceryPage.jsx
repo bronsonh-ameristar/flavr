@@ -51,7 +51,8 @@ const GroceryPage = () => {
   // Fetch meal plans on mount
   useEffect(() => {
     mealPlanning.fetchMealPlans();
-  }, [mealPlanning.fetchMealPlans]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load manual grocery items from database
   const loadManualItems = useCallback(async () => {
@@ -123,20 +124,7 @@ const GroceryPage = () => {
     );
   }, [consolidatedList]);
 
-  // Auto-generate grocery list on mount
-  useEffect(() => {
-    const autoGenerate = async () => {
-      if (Object.keys(mealPlanning.mealPlans).length > 0 && !lastGenerated) {
-        await handleGenerateFromPlanning(true);
-      }
-    };
-
-    if (!mealPlanning.loading) {
-      autoGenerate();
-    }
-  }, [mealPlanning.mealPlans, mealPlanning.loading]);
-
-  const handleGenerateFromPlanning = async (silent = false) => {
+  const handleGenerateFromPlanning = useCallback(async (silent = false) => {
     setLoading(true);
     try {
       const data = await mealPlanning.generateGroceryList();
@@ -176,9 +164,9 @@ const GroceryPage = () => {
       setLastGenerated(new Date());
 
       if (!silent) {
-        const totalItems = Object.values(transformedList).reduce((sum, items) => sum + items.length, 0);
-        if (totalItems > 0) {
-          alert(`Generated grocery list with ${totalItems} items from ${Object.keys(transformedList).length} stores!`);
+        const itemCount = Object.values(transformedList).reduce((sum, items) => sum + items.length, 0);
+        if (itemCount > 0) {
+          alert(`Generated grocery list with ${itemCount} items from ${Object.keys(transformedList).length} stores!`);
         }
       }
     } catch (error) {
@@ -189,7 +177,20 @@ const GroceryPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [mealPlanning]);
+
+  // Auto-generate grocery list on mount
+  useEffect(() => {
+    const autoGenerate = async () => {
+      if (Object.keys(mealPlanning.mealPlans).length > 0 && !lastGenerated) {
+        await handleGenerateFromPlanning(true);
+      }
+    };
+
+    if (!mealPlanning.loading) {
+      autoGenerate();
+    }
+  }, [mealPlanning.mealPlans, mealPlanning.loading, lastGenerated, handleGenerateFromPlanning]);
 
   const stores = ['all', ...Object.keys(consolidatedList)];
 

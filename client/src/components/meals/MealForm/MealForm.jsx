@@ -1,6 +1,6 @@
 // client/src/components/meals/MealForm/MealForm.jsx
 import React, { useState } from 'react';
-import { Plus, Minus, Save, X, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
+import { Plus, Minus, Save, X, ChevronUp, ChevronDown } from 'lucide-react';
 import './MealForm.css';
 
 const STEP_CATEGORIES = [

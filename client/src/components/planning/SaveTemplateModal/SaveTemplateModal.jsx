@@ -22,7 +22,6 @@ const SaveTemplateModal = ({ onClose, weekStart, mealPlans, onSaved }) => {
   const getMealsPreview = () => {
     const preview = {};
     Object.entries(mealPlans).forEach(([key, plan]) => {
-      const [date] = key.split('-').slice(0, 3).join('-').split('-');
       const dateStr = key.substring(0, 10);
       const mealType = key.substring(11);
 

@@ -13,9 +13,9 @@ const formatLocalDate = (date) => {
 };
 
 const DEFAULT_MEAL_TYPES = ['breakfast', 'lunch', 'dinner'];
+const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const AddMealModal = ({ onClose, selected, onSave, meals = [], selectedSlot = null, mealTypes = [] }) => {
-  const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Use provided meal types or fall back to defaults
   const availableMealTypes = mealTypes.length > 0
