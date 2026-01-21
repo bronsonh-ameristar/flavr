@@ -1,7 +1,9 @@
 // client/src/pages/GroceryPage/GroceryPage.jsx - UPDATED WITH DIRECT UNIT CONVERTER
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ShoppingCart, Plus, Store, Trash2, Calendar, RefreshCw, X } from 'lucide-react';
 import { useMealPlanning } from '../../hooks/useMealPlanning';
+import MealsService from '../../services/mealsService';
+import GroceryItemService from '../../services/groceryItemService';
 import {
   consolidateIngredients,
   convertUnit,
@@ -12,9 +14,18 @@ import AddItemModal from '../../components/grocery/AddItemModal/AddItemModal';
 import GroceryStoreSection from '../../components/grocery/GroceryStoreSection';
 import './GroceryPage.css';
 
+// Format date to YYYY-MM-DD in local timezone (avoids UTC shift from toISOString)
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const GroceryPage = () => {
   const [selectedStore, setSelectedStore] = useState('all');
   const [groceryList, setGroceryList] = useState({});
+  const [manualItems, setManualItems] = useState([]); // Persisted manual items from DB
   const [loading, setLoading] = useState(false);
   const [lastGenerated, setLastGenerated] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -29,22 +40,65 @@ const GroceryPage = () => {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
     return {
-      startDate: weekStart.toISOString().split('T')[0],
-      endDate: weekEnd.toISOString().split('T')[0]
+      startDate: formatLocalDate(weekStart),
+      endDate: formatLocalDate(weekEnd)
     };
   };
 
   const { startDate, endDate } = getWeekDates();
   const mealPlanning = useMealPlanning(startDate, endDate);
 
-  // Consolidate items directly with useMemo
+  // Fetch meal plans on mount
+  useEffect(() => {
+    mealPlanning.fetchMealPlans();
+  }, [mealPlanning.fetchMealPlans]);
+
+  // Load manual grocery items from database
+  const loadManualItems = useCallback(async () => {
+    try {
+      const response = await GroceryItemService.getAllItems();
+      setManualItems(response.data || []);
+    } catch (error) {
+      console.error('Failed to load manual grocery items:', error);
+    }
+  }, []);
+
+  // Fetch manual items on mount
+  useEffect(() => {
+    loadManualItems();
+  }, [loadManualItems]);
+
+  // Consolidate items directly with useMemo (includes both meal-based and manual items)
   const consolidatedList = useMemo(() => {
-    if (!groceryList || Object.keys(groceryList).length === 0) {
+    // Start with meal-based grocery list
+    const combined = { ...groceryList };
+
+    // Add manual items from database
+    manualItems.forEach(item => {
+      const store = item.store || 'Unassigned';
+      if (!combined[store]) {
+        combined[store] = [];
+      }
+      combined[store].push({
+        id: `manual-db-${item.id}`,
+        dbId: item.id, // Keep reference to database ID
+        name: item.name,
+        quantity: item.quantity,
+        unit: item.unit || '',
+        category: item.category || 'other',
+        store: store,
+        completed: item.completed,
+        usedInMeals: [],
+        isManualItem: true // Flag to identify manual items
+      });
+    });
+
+    if (Object.keys(combined).length === 0) {
       return {};
     }
 
     const consolidated = {};
-    Object.entries(groceryList).forEach(([storeName, items]) => {
+    Object.entries(combined).forEach(([storeName, items]) => {
       const consolidatedItems = consolidateIngredients(items);
       if (consolidatedItems.length > 0) {
         consolidated[storeName] = consolidatedItems;
@@ -52,7 +106,7 @@ const GroceryPage = () => {
     });
 
     return consolidated;
-  }, [groceryList]);
+  }, [groceryList, manualItems]);
 
   // Calculate totals
   const totalItems = useMemo(() => {
@@ -111,7 +165,8 @@ const GroceryPage = () => {
               category: item.category || 'other',
               store: store,
               completed: false,
-              usedInMeals: item.usedInMeals || []
+              usedInMeals: item.usedInMeals || [],
+              ingredientIds: item.ingredientIds || []
             });
           });
         });
@@ -138,7 +193,25 @@ const GroceryPage = () => {
 
   const stores = ['all', ...Object.keys(consolidatedList)];
 
-  const toggleItemComplete = (storeKey, itemId) => {
+  const toggleItemComplete = async (storeKey, itemId) => {
+    // Check if this is a manual item from database
+    if (itemId.startsWith('manual-db-')) {
+      const dbId = parseInt(itemId.replace('manual-db-', ''));
+      try {
+        await GroceryItemService.toggleItemCompleted(dbId);
+        // Update local state
+        setManualItems(prev =>
+          prev.map(item =>
+            item.id === dbId ? { ...item, completed: !item.completed } : item
+          )
+        );
+      } catch (error) {
+        console.error('Failed to toggle item:', error);
+      }
+      return;
+    }
+
+    // Handle meal-based items (local state only)
     setGroceryList(prev => ({
       ...prev,
       [storeKey]: prev[storeKey].map(item =>
@@ -147,7 +220,21 @@ const GroceryPage = () => {
     }));
   };
 
-  const removeItem = (storeKey, itemId) => {
+  const removeItem = async (storeKey, itemId) => {
+    // Check if this is a manual item from database
+    if (itemId.startsWith('manual-db-')) {
+      const dbId = parseInt(itemId.replace('manual-db-', ''));
+      try {
+        await GroceryItemService.deleteItem(dbId);
+        // Update local state
+        setManualItems(prev => prev.filter(item => item.id !== dbId));
+      } catch (error) {
+        console.error('Failed to delete item:', error);
+      }
+      return;
+    }
+
+    // Handle meal-based items (local state only)
     setGroceryList(prev => {
       const newStoreItems = prev[storeKey].filter(item => item.id !== itemId);
 
@@ -163,22 +250,24 @@ const GroceryPage = () => {
     });
   };
 
-  const handleAddItem = (itemData) => {
-    const storeName = itemData.store || 'Unassigned';
+  const handleAddItem = async (itemData) => {
+    try {
+      // Persist to database
+      const response = await GroceryItemService.createItem({
+        name: itemData.name,
+        quantity: itemData.quantity || '1',
+        unit: itemData.unit,
+        category: itemData.category || 'other',
+        store: itemData.store || 'Unassigned'
+      });
 
-    const newItem = {
-      id: `manual-${Date.now()}`,
-      ...itemData,
-      completed: false,
-      usedInMeals: []
-    };
-
-    setGroceryList(prev => ({
-      ...prev,
-      [storeName]: [...(prev[storeName] || []), newItem]
-    }));
-
-    setShowAddModal(false);
+      // Add to local state
+      setManualItems(prev => [...prev, response.data]);
+      setShowAddModal(false);
+    } catch (error) {
+      console.error('Failed to add item:', error);
+      alert('Failed to add item: ' + error.message);
+    }
   };
 
   const handleEditStore = (storeKey, itemId) => {
@@ -188,7 +277,7 @@ const GroceryPage = () => {
     setEditingItem({ ...item, oldStore: storeKey });
   };
 
-  const handleUpdateStore = (newStore) => {
+  const handleUpdateStore = async (newStore) => {
     if (!editingItem || !newStore) {
       setEditingItem(null);
       return;
@@ -196,8 +285,27 @@ const GroceryPage = () => {
 
     const oldStore = editingItem.oldStore;
 
+    // Check if this is a manual item from database
+    if (editingItem.id.startsWith('manual-db-')) {
+      const dbId = parseInt(editingItem.id.replace('manual-db-', ''));
+      try {
+        await GroceryItemService.updateItemStore(dbId, newStore);
+        // Update local state
+        setManualItems(prev =>
+          prev.map(item =>
+            item.id === dbId ? { ...item, store: newStore } : item
+          )
+        );
+      } catch (error) {
+        console.error('Failed to update item store:', error);
+      }
+      setEditingItem(null);
+      return;
+    }
+
+    // Update local state immediately for responsive UI (meal-based items)
     setGroceryList(prev => {
-      const updatedOldStore = prev[oldStore].filter(item => item.id !== editingItem.id);
+      const updatedOldStore = prev[oldStore]?.filter(item => item.id !== editingItem.id) || [];
       const updatedItem = { ...editingItem, store: newStore };
       const updatedNewStore = [...(prev[newStore] || []), updatedItem];
 
@@ -213,6 +321,21 @@ const GroceryPage = () => {
 
       return newList;
     });
+
+    // Persist to server - update all associated ingredient IDs
+    if (editingItem.ingredientIds && editingItem.ingredientIds.length > 0) {
+      try {
+        await Promise.all(
+          editingItem.ingredientIds.map(ingredientId =>
+            MealsService.updateIngredientStore(ingredientId, newStore)
+          )
+        );
+      } catch (error) {
+        console.error('Failed to persist store change:', error);
+        // Note: We don't revert the UI change since the local state is still useful
+        // The next time the grocery list is regenerated, it will pull the server state
+      }
+    }
 
     setEditingItem(null);
   };
@@ -284,9 +407,18 @@ const GroceryPage = () => {
     return getUnitsInCategory(category);
   };
 
-  const clearCompleted = () => {
+  const clearCompleted = async () => {
     if (!window.confirm('Clear all completed items?')) return;
 
+    // Clear completed manual items from database
+    try {
+      await GroceryItemService.clearCompleted();
+      setManualItems(prev => prev.filter(item => !item.completed));
+    } catch (error) {
+      console.error('Failed to clear completed manual items:', error);
+    }
+
+    // Clear completed meal-based items from local state
     const newList = {};
     Object.entries(groceryList).forEach(([store, items]) => {
       const remainingItems = items.filter(item => !item.completed);

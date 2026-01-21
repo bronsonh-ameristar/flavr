@@ -9,11 +9,26 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'mealId',
         as: 'meal'
       });
+
+      // MealPlan belongs to User
+      MealPlan.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user'
+      });
     }
 
     // Helper method to format date for frontend
+    // Note: DATEONLY fields in Sequelize are returned as strings in YYYY-MM-DD format
     getFormattedDate() {
-      return this.date.toISOString().split('T')[0];
+      // If date is already a string (DATEONLY), return as-is
+      if (typeof this.date === 'string') {
+        return this.date;
+      }
+      // If it's a Date object, format it in local timezone
+      const year = this.date.getFullYear();
+      const month = String(this.date.getMonth() + 1).padStart(2, '0');
+      const day = String(this.date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
 
     // Helper method to get meal plan key for frontend
@@ -56,6 +71,10 @@ module.exports = (sequelize, DataTypes) => {
           msg: 'Meal ID is required'
         }
       }
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     }
   }, {
     sequelize,
@@ -63,7 +82,7 @@ module.exports = (sequelize, DataTypes) => {
     indexes: [
       {
         unique: true,
-        fields: ['date', 'mealType']
+        fields: ['date', 'mealType', 'userId']
       }
     ]
   });

@@ -1,0 +1,191 @@
+.recurring-delete-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  padding: 1rem;
+}
+
+.recurring-delete-modal {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-primary);
+}
+
+.recurring-delete-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.recurring-delete-modal .modal-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+}
+
+.recurring-delete-modal .close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.recurring-delete-modal .close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.recurring-delete-modal .modal-body {
+  padding: 1.5rem;
+}
+
+.modal-description {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.modal-description strong {
+  color: var(--text-primary);
+}
+
+.delete-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.delete-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.delete-option:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--primary-color);
+}
+
+.delete-option-warning:hover {
+  border-color: var(--warning-color, #f59e0b);
+}
+
+.delete-option-danger:hover {
+  border-color: var(--danger-color, #ef4444);
+}
+
+.option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.delete-option:hover .option-icon {
+  background: var(--primary-light, rgba(59, 130, 246, 0.1));
+  color: var(--primary-color);
+}
+
+.delete-option-warning:hover .option-icon {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color, #f59e0b);
+}
+
+.delete-option-danger:hover .option-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color, #ef4444);
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.option-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.option-description {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.modal-footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-primary);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.recurring-delete-modal .btn-cancel {
+  padding: 0.625rem 1.25rem;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-primary);
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.recurring-delete-modal .btn-cancel:hover {
+  background: var(--bg-secondary);
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .recurring-delete-modal {
+    max-width: 100%;
+    margin: 0 1rem;
+  }
+
+  .delete-option {
+    padding: 0.875rem;
+  }
+
+  .option-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .option-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+}

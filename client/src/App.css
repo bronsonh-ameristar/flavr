@@ -80,6 +80,39 @@ input:focus, select:focus, textarea:focus {
   color: #666;
 }
 
+/* App loading screen */
+.app-loading,
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  gap: 1rem;
+}
+
+.app-loading p,
+.loading-container p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-primary);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Error states */
 .error {
   color: #dc2626;
@@ -104,5 +137,290 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 768px) {
   .container {
     padding: 0 0.5rem;
+  }
+}
+
+/* ============================================
+   MOBILE-FIRST RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Viewport meta support - prevents zoom on input focus */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Touch-friendly button and interactive element sizing */
+.touch-target {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+/* Disable hover effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .nav-link:hover,
+  .meal-card:hover,
+  .grocery-item:hover {
+    transform: none;
+  }
+}
+
+/* Active states for touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .btn-primary:active,
+  .btn-secondary:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  .meal-card:active {
+    transform: scale(0.99);
+  }
+}
+
+/* Mobile visibility utilities */
+.hide-mobile {
+  display: block;
+}
+
+.show-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .show-mobile {
+    display: block !important;
+  }
+
+  .show-mobile-flex {
+    display: flex !important;
+  }
+
+  .show-mobile-inline {
+    display: inline !important;
+  }
+}
+
+/* Mobile-specific spacing */
+@media (max-width: 768px) {
+  .mobile-p-0 { padding: 0 !important; }
+  .mobile-p-1 { padding: var(--spacing-xs) !important; }
+  .mobile-p-2 { padding: var(--spacing-sm) !important; }
+  .mobile-p-3 { padding: var(--spacing-md) !important; }
+
+  .mobile-px-0 { padding-left: 0 !important; padding-right: 0 !important; }
+  .mobile-px-2 { padding-left: var(--spacing-sm) !important; padding-right: var(--spacing-sm) !important; }
+  .mobile-px-3 { padding-left: var(--spacing-md) !important; padding-right: var(--spacing-md) !important; }
+
+  .mobile-py-0 { padding-top: 0 !important; padding-bottom: 0 !important; }
+  .mobile-py-2 { padding-top: var(--spacing-sm) !important; padding-bottom: var(--spacing-sm) !important; }
+  .mobile-py-3 { padding-top: var(--spacing-md) !important; padding-bottom: var(--spacing-md) !important; }
+
+  .mobile-m-0 { margin: 0 !important; }
+  .mobile-mb-2 { margin-bottom: var(--spacing-sm) !important; }
+  .mobile-mb-3 { margin-bottom: var(--spacing-md) !important; }
+}
+
+/* Mobile-specific text sizes */
+@media (max-width: 768px) {
+  .mobile-text-sm { font-size: var(--font-size-sm) !important; }
+  .mobile-text-base { font-size: var(--font-size-base) !important; }
+  .mobile-text-lg { font-size: var(--font-size-lg) !important; }
+
+  h1, .h1 { font-size: var(--font-size-2xl) !important; }
+  h2, .h2 { font-size: var(--font-size-xl) !important; }
+  h3, .h3 { font-size: var(--font-size-lg) !important; }
+}
+
+/* Mobile full-width utilities */
+@media (max-width: 768px) {
+  .mobile-full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .mobile-flex-col {
+    flex-direction: column !important;
+  }
+
+  .mobile-flex-wrap {
+    flex-wrap: wrap !important;
+  }
+
+  .mobile-gap-2 {
+    gap: var(--spacing-sm) !important;
+  }
+
+  .mobile-gap-3 {
+    gap: var(--spacing-md) !important;
+  }
+}
+
+/* Smooth scrolling for mobile */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Horizontal scroll container for mobile */
+.horizontal-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.horizontal-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Pull-to-refresh safe area */
+@media (max-width: 768px) {
+  .main-content {
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: calc(var(--safe-area-inset-bottom) + var(--bottom-nav-height));
+    min-height: calc(100vh - var(--nav-height-mobile));
+  }
+}
+
+/* Prevent text selection on interactive elements (mobile UX) */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Mobile card improvements */
+@media (max-width: 768px) {
+  .card, .summary-card, .store-section {
+    border-radius: var(--radius-lg);
+    margin-left: calc(-1 * var(--spacing-sm));
+    margin-right: calc(-1 * var(--spacing-sm));
+    border-radius: 0;
+  }
+}
+
+/* Sticky header support for mobile */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg-primary);
+}
+
+@media (max-width: 768px) {
+  .sticky-header {
+    top: var(--safe-area-inset-top);
+  }
+}
+
+/* Mobile-friendly form inputs */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.875rem 1rem;
+    min-height: var(--touch-target-min);
+  }
+
+  button,
+  .btn-primary,
+  .btn-secondary {
+    min-height: var(--touch-target-min);
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Fixed bottom action bar for mobile */
+.mobile-action-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-action-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    padding-bottom: calc(var(--spacing-sm) + var(--safe-area-inset-bottom));
+    gap: var(--spacing-sm);
+    z-index: 100;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .mobile-action-bar button {
+    flex: 1;
+  }
+}
+
+/* Swipe hint animation */
+@keyframes swipe-hint {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-10px); }
+}
+
+.swipe-hint {
+  animation: swipe-hint 1.5s ease-in-out 2;
+}
+
+/* Loading skeleton for mobile */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-secondary) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Floating action button for mobile */
+.fab {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .fab {
+    display: flex;
+    position: fixed;
+    bottom: calc(var(--bottom-nav-height) + var(--spacing-md) + var(--safe-area-inset-bottom));
+    right: var(--spacing-md);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    box-shadow: var(--shadow-lg);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 90;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .fab:active {
+    transform: scale(0.95);
   }
 }

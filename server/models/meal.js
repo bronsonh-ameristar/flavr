@@ -16,11 +16,21 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'CASCADE'
       });
 
-      // Optional: Track which SearchMeal this came from
-      Meal.belongsTo(models.SearchMeal, {
-        foreignKey: 'searchMealId',
-        as: 'originalSearchMeal',
-        constraints: false
+      Meal.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user'
+      });
+
+      Meal.hasMany(models.RecurringMeal, {
+        foreignKey: 'mealId',
+        as: 'recurringMeals',
+        onDelete: 'CASCADE'
+      });
+
+      Meal.hasMany(models.MealPlanTemplateItem, {
+        foreignKey: 'mealId',
+        as: 'templateItems',
+        onDelete: 'CASCADE'
       });
     }
 
@@ -115,6 +125,37 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    structuredInstructions: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: null,
+      validate: {
+        isValidStructure(value) {
+          if (value === null || value === undefined) return;
+          if (!Array.isArray(value)) {
+            throw new Error('structuredInstructions must be an array');
+          }
+          const validCategories = ['prep', 'cooking', 'assembly', 'resting'];
+          value.forEach((step, index) => {
+            if (typeof step.stepNumber !== 'number') {
+              throw new Error(`Step ${index + 1}: stepNumber must be a number`);
+            }
+            if (typeof step.action !== 'string' || !step.action.trim()) {
+              throw new Error(`Step ${index + 1}: action is required`);
+            }
+            if (step.duration !== undefined && typeof step.duration !== 'number') {
+              throw new Error(`Step ${index + 1}: duration must be a number`);
+            }
+            if (step.category && !validCategories.includes(step.category)) {
+              throw new Error(`Step ${index + 1}: category must be one of: ${validCategories.join(', ')}`);
+            }
+            if (step.ingredientRefs && !Array.isArray(step.ingredientRefs)) {
+              throw new Error(`Step ${index + 1}: ingredientRefs must be an array`);
+            }
+          });
+        }
+      }
+    },
     imageUrl: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -124,14 +165,14 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
-    source: {
-      type: DataTypes.STRING,
+    visibility: {
+      type: DataTypes.ENUM('public', 'private'),
       allowNull: false,
-      defaultValue: 'local',
+      defaultValue: 'private',
       validate: {
         isIn: {
-          args: [['global', 'local']],
-          msg: 'Source must be global or local'
+          args: [['public', 'private']],
+          msg: 'Visibility must be public or private'
         }
       }
     },
@@ -139,18 +180,62 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
-    searchMealId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'SearchMeals',
-        key: 'id'
-      }
-    },
     userId: {
       type: DataTypes.INTEGER,
       allowNull: true,
       comment: 'If you have user authentication, track which user owns this meal'
+    },
+    calories: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Calories cannot be negative'
+        },
+        isInt: {
+          msg: 'Calories must be a whole number'
+        }
+      }
+    },
+    protein: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Protein cannot be negative'
+        },
+        isInt: {
+          msg: 'Protein must be a whole number'
+        }
+      }
+    },
+    carbs: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Carbs cannot be negative'
+        },
+        isInt: {
+          msg: 'Carbs must be a whole number'
+        }
+      }
+    },
+    fat: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Fat cannot be negative'
+        },
+        isInt: {
+          msg: 'Fat must be a whole number'
+        }
+      }
     }
   }, {
     sequelize,

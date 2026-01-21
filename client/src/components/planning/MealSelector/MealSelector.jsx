@@ -3,7 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { Clock, Users, Search } from 'lucide-react';
 import './MealSelector.css';
 
-const DraggableMealCard = ({ meal, onSelect, isDragMode }) => {
+const DraggableMealCard = ({ meal, onSelect, isDragMode, isSelected }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: meal.id.toString(),
     disabled: !isDragMode
@@ -14,14 +14,20 @@ const DraggableMealCard = ({ meal, onSelect, isDragMode }) => {
     opacity: isDragging ? 0.5 : 1,
   } : {};
 
+  const handleClick = () => {
+    if (onSelect) {
+      onSelect(meal);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
-      className={`meal-selector-card ${isDragging ? 'dragging' : ''}`}
-      onClick={() => !isDragMode && onSelect && onSelect(meal.id)}
+      className={`meal-selector-card ${isDragging ? 'dragging' : ''} ${isSelected ? 'selected' : ''}`}
+      onClick={handleClick}
     >
       <img src={meal.imageUrl} alt={meal.name} />
       <div className="meal-info">
@@ -32,11 +38,12 @@ const DraggableMealCard = ({ meal, onSelect, isDragMode }) => {
         </div>
         <span className={`category ${meal.category}`}>{meal.category}</span>
       </div>
+      {isSelected && <div className="selected-checkmark">✓</div>}
     </div>
   );
 };
 
-const MealSelector = ({ meals, onMealSelect, isDragMode = false }) => {
+const MealSelector = ({ meals, onMealSelect, isDragMode = false, selectedMealId = null }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -51,8 +58,8 @@ const MealSelector = ({ meals, onMealSelect, isDragMode = false }) => {
   return (
     <div className="meal-selector">
       <div className="selector-header">
-        <h3>{isDragMode ? 'Drag Meals to Calendar' : 'Select a Meal'}</h3>
-        <p>{isDragMode ? 'Drag and drop meals onto calendar slots' : 'Click on a meal to add it'}</p>
+        <h3>{isDragMode ? 'Select or Drag Meals' : 'Select a Meal'}</h3>
+        <p>{isDragMode ? 'Click to select or drag and drop meals onto calendar slots' : 'Click on a meal to add it'}</p>
       </div>
 
       <div className="selector-filters">
@@ -65,7 +72,7 @@ const MealSelector = ({ meals, onMealSelect, isDragMode = false }) => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
+
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
@@ -85,6 +92,7 @@ const MealSelector = ({ meals, onMealSelect, isDragMode = false }) => {
             meal={meal}
             onSelect={onMealSelect}
             isDragMode={isDragMode}
+            isSelected={selectedMealId === meal.id}
           />
         ))}
       </div>
