@@ -361,7 +361,7 @@ export const getUnitCategories = () => {
   return Object.keys(UNIT_CONVERSIONS);
 };
 
-export default {
+const unitConverter = {
   convertUnit,
   areUnitsCompatible,
   getPreferredUnit,
@@ -374,3 +374,5 @@ export default {
   parseQuantity,
   normalizeUnit
 };
+
+export default unitConverter;

@@ -13,15 +13,14 @@ const SearchMealsPage = () => {
   const [viewingMeal, setViewingMeal] = useState(null);
   const [addedMeals, setAddedMeals] = useState(new Set());
   
-  const { 
-    searchMeals, 
-    loading, 
-    error, 
+  const {
+    searchMeals,
+    loading,
+    error,
     totalCount,
     fetchTopMeals,
     searchGlobalMeals,
-    addMealToPersonal,
-    checkMealInPersonal
+    addMealToPersonal
   } = useSearchMeals();
 
   const categories = ['all', 'breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
@@ -30,7 +29,7 @@ const SearchMealsPage = () => {
   // Load initial top 10 meals
   useEffect(() => {
     fetchTopMeals(10);
-  }, []);
+  }, [fetchTopMeals]);
 
   // Handle search and filter changes
   useEffect(() => {
@@ -48,7 +47,7 @@ const SearchMealsPage = () => {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm, selectedCategory, selectedCuisine]);
+  }, [searchTerm, selectedCategory, selectedCuisine, fetchTopMeals, searchGlobalMeals]);
 
   const handleViewMeal = (meal) => {
     setViewingMeal(meal);

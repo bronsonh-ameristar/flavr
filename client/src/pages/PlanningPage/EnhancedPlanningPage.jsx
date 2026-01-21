@@ -1,6 +1,6 @@
 // client/src/pages/PlanningPage/EnhancedPlanningPage.jsx
-import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, ShoppingCart, RotateCcw, FileText, Copy, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Plus, RotateCcw, FileText, Copy, Save } from 'lucide-react';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { useMealPlanning } from '../../hooks/useMealPlanning';
 import { useMeals } from '../../hooks/useMeals';
@@ -31,7 +31,7 @@ const formatLocalDate = (date) => {
 
 const EnhancedPlanningPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [showMealSelector, setShowMealSelector] = useState(false);
+  const [, setShowMealSelector] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [draggedMeal, setDraggedMeal] = useState(null);
   // variables for the add meal modal
@@ -41,8 +41,8 @@ const EnhancedPlanningPage = () => {
   const [showOccupiedSlotModal, setShowOccupiedSlotModal] = useState(false);
   const [occupiedMealType, setOccupiedMealType] = useState(null);
   const [occupiedDate, setOccupiedDate] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm] = useState('');
+  const [selectedCategory] = useState('all');
   const [showMealForm, setShowMealForm] = useState(false);
   const [showMealDetail, setShowMealDetail] = useState(false);
   const [editingMeal, setEditingMeal] = useState(null);
@@ -92,7 +92,6 @@ const EnhancedPlanningPage = () => {
 
   const {
     meals,
-    totalCount,
     fetchMeals,
     searchMeals,
     createMeal,
@@ -107,7 +106,6 @@ const EnhancedPlanningPage = () => {
     error,
     addMealToPlan,
     removeMealFromPlan,
-    generateGroceryList,
     fetchMealPlans,
     fetchStats
   } = useMealPlanning(startDateStr, endDateStr);
@@ -126,9 +124,7 @@ const EnhancedPlanningPage = () => {
 
   // Use the new hook for meal viewing/editing
   const {
-    handleViewMeal: handleViewClick,
     handleEditMeal: handleEditClick,
-    handleDeleteMeal: handleDeleteClick,
     handleSaveMeal: handleMealSubmit
   } = useViewMeals({
     deleteMeal,
@@ -190,18 +186,6 @@ const EnhancedPlanningPage = () => {
     }
   };
 
-  const handleMealSelect = async (mealId) => {
-    if (selectedSlot) {
-      try {
-        await addMealToPlan(selectedSlot.date, selectedSlot.mealType, mealId);
-        setShowMealSelector(false);
-        setSelectedSlot(null);
-      } catch (error) {
-        alert('Failed to add meal: ' + error.message);
-      }
-    }
-  };
-
   const handleDragStart = (event) => {
     const meal = meals.find(m => m.id === parseInt(event.active.id));
     setDraggedMeal(meal);
@@ -258,19 +242,6 @@ const EnhancedPlanningPage = () => {
       alert('Failed to add meal: ' + error.message);
     }
     setShowAddMealModal(true);
-  };
-
-  const handleGenerateGroceryList = async () => {
-    try {
-      const groceryData = await generateGroceryList();
-      if (groceryData && groceryData.totalItems > 0) {
-        alert(`Generated grocery list with ${groceryData.totalItems} items! (Navigate to Grocery page to view)`);
-      } else {
-        alert('No items to add to grocery list. Plan some meals first!');
-      }
-    } catch (error) {
-      alert('Failed to generate grocery list: ' + error.message);
-    }
   };
 
   // Handlers for modals
